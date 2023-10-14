@@ -11,11 +11,137 @@ public class Program
     {
         //Level1();
         //Level2();
-        Level3();
+        //Level5();
+        //Level3();
+        Level4();
 
         Console.WriteLine("Done");
     }
 
+    private static void Level4()
+    {
+        for (var inputFileNumber = 1; inputFileNumber <= 5; inputFileNumber++)
+        {
+            var inputfilename = $"../../../level4_{inputFileNumber}.in";
+            var outputfilename = $"../../../level4_{inputFileNumber}.out";
+
+            var lines = File.ReadAllLines(inputfilename).ToList();
+            var tournaments = lines.Skip(1).ToList();
+
+            using var outputWriter = new StreamWriter(outputfilename);
+
+            foreach (var input in tournaments)
+            {
+                var line = input.Replace('R', ' ');
+                line = line.Replace('P', ' ');
+                line = line.Replace('S', ' ');
+
+                var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                var rocks = int.Parse(parts[0]);
+                var papers = int.Parse(parts[1]);
+                var scissors = int.Parse(parts[2]);
+
+                var pairs = new Dictionary<string, int>();
+
+                pairs["RR"] = 0;
+                pairs["RS"] = 0;
+                pairs["RP"] = 0;
+                pairs["SP"] = 0;
+                pairs["PP"] = 0;
+                pairs["SS"] = 0;
+
+                // Avoid pairing a single scissor with a rock
+                if (scissors == 1 && papers > 0)
+                {
+                    pairs["SP"]++;
+                    scissors--;
+                    papers--;
+                }
+
+                // Pair Rocks with Paper
+                var rpPairs = Math.Min(rocks, papers);
+                pairs["RP"] += rpPairs;
+                rocks -= rpPairs;
+                papers -= rpPairs;
+
+                // Pair remaining Papers with Scissors
+                var spPairs = Math.Min(papers, scissors);
+                pairs["SP"] += spPairs;
+                scissors -= spPairs;
+                papers -= spPairs;
+
+                var rrPairs = Math.DivRem(rocks, 2, out rocks);
+                pairs["RR"] += rrPairs;
+
+                if (rocks > 1) throw new InvalidOperationException("Too many rocks error");
+
+                if (rocks == 1 && scissors > 0)
+                {
+                    pairs["RS"]++;
+                    rocks--;
+                    scissors--;
+                }
+
+                if (rocks > 0) throw new InvalidOperationException("Too many rocks error");
+
+                // Match remaining Papers with themselves
+                var ppPairs = Math.DivRem(papers, 2, out papers);
+                pairs["PP"] += ppPairs;
+
+                // Match remaining scissors with themselves
+                var ssPairs = Math.DivRem(scissors, 2, out scissors);
+                pairs["SS"] += ssPairs;
+
+                if (scissors > 0 || papers > 0 || rocks > 0) throw new InvalidOperationException("Logic error");
+
+                var pairCount = pairs.Sum(p => p.Value);
+
+                var lineupList = new List<string>();
+
+                lineupList.AddRange(Enumerable.Range(1, pairs["RS"]).Select(_ => "RS"));
+                lineupList.AddRange(Enumerable.Range(1, pairs["RR"]).Select(_ => "RR"));
+                lineupList.AddRange(Enumerable.Range(1, pairs["RP"]).Select(_ => "RP"));
+                lineupList.AddRange(Enumerable.Range(1, pairs["PP"]).Select(_ => "PP"));
+                lineupList.AddRange(Enumerable.Range(1, pairs["SP"]).Select(_ => "SP"));
+                lineupList.AddRange(Enumerable.Range(1, pairs["SS"]).Select(_ => "SS"));
+
+                var position = 0;
+                var half = pairCount / 2;
+
+                while (half > 0)
+                {
+                    var rpIndex = lineupList.FindIndex(position, s => s == "RP");
+
+                    if (rpIndex != -1 && lineupList[position] != "RP")
+                    {
+                        SwapPositions(rpIndex, position);
+                    }
+
+                    position += half;
+                    half /= 2;
+                }
+
+                Console.WriteLine(string.Join(" ", lineupList));
+
+                var lineup = string.Join("", lineupList);
+                outputWriter.WriteLine(lineup);
+
+                var tournamentResult = RunTournamentForRounds(lineup, (int)Math.Log2(lineupList.Count));
+
+                if (tournamentResult.Contains('R')) throw new InvalidOperationException("No rocks allowed here");
+                if (!tournamentResult.Contains('S')) throw new InvalidOperationException("No scissors left");
+
+                Console.WriteLine("After all rounds: {0}", tournamentResult);
+
+                void SwapPositions(int index1, int index2)
+                {
+                    var temp = lineupList[index1];
+                    lineupList[index1] = lineupList[index2];
+                    lineupList[index2] = temp;
+                }
+            }
+        }
+    }
 
     private static void Level3()
     {
@@ -131,20 +257,8 @@ public class Program
                     pairs[index2] = temp;
                 }
             }
-
-#if false
-            
-
-            foreach (var tournament in tournaments)
-            {
-                string fighters = RunTournamentForRounds(tournament, 2);
-
-                outputWriter.WriteLine(fighters);
-            } 
-#endif
         }
     }
-
 
     private static void Level2()
     {
