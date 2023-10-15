@@ -7,16 +7,115 @@ namespace Contest;
 
 public class Program
 {
-	public static void Main(string[] args)
+    public static void Main(string[] args)
     {
         //Level1();
         //Level2();
-        //Level5();
         //Level3();
-        Level4();
+        //Level4();
+        Level5();
 
         Console.WriteLine("Done");
     }
+    private static void Level5()
+    {
+        for (var inputFileNumber = 1; inputFileNumber <= 5; inputFileNumber++)
+        {
+            var inputfilename = $"../../../level5_{inputFileNumber}.in";
+            var outputfilename = $"../../../level5_{inputFileNumber}.out";
+
+            var lines = File.ReadAllLines(inputfilename).ToList();
+            var tournaments = lines.Skip(1).ToList();
+
+            using var outputWriter = new StreamWriter(outputfilename);
+
+            foreach (var input in tournaments)
+            {
+                // 3R 11P 2S 15Y 1L
+
+                var line = input.Replace('R', ' ');
+                line = line.Replace('P', ' ');
+                line = line.Replace('S', ' ');
+                line = line.Replace('Y', ' ');
+                line = line.Replace('L', ' ');
+
+                var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                var rocks = int.Parse(parts[0]);
+                var papers = int.Parse(parts[1]);
+                var scissors = int.Parse(parts[2]);
+                var spocks = int.Parse(parts[3]);
+                var lizards = int.Parse(parts[4]);
+
+                var fighterCount = rocks + papers + scissors + spocks + lizards;
+
+                var lineupList = new Dictionary<int, string>();
+
+
+                // left half
+                if (papers > 0)
+                {
+                    // paper to remove rocks from the left
+                    lineupList[0] = "P";
+                    papers--;
+                }
+                else
+                {
+                    // spock to remove rocks from the left
+                    lineupList[0] = "Y";
+                    spocks--;
+                }
+
+
+                var firstEmptyPos = 1;
+
+                // fill with rocks until the middle - 1 or out of rocks
+                for (var pos = 1; pos < (int)fighterCount / 2 - 1; pos++)
+                {
+                    if (rocks > 0)
+                    {
+                        lineupList[pos] = "R";
+                        rocks--;
+                        firstEmptyPos = pos + 1;
+                    }
+                    else
+                    {
+                        firstEmptyPos = pos;
+                        break;
+                    }
+                }
+
+                // if more than 50% scissors, place them here
+                if (scissors > fighterCount / 2)
+                {
+
+                }
+
+
+
+
+                Console.WriteLine(string.Join(" ", lineupList));
+
+                var lineup = string.Join("", lineupList);
+                outputWriter.WriteLine(lineup);
+
+                var tournamentResult = RunTournamentForRounds(lineup, (int)Math.Log2(lineupList.Count), true);
+
+                if (tournamentResult.Contains('R')) throw new InvalidOperationException("No rocks allowed here");
+                if (!tournamentResult.Contains('S')) throw new InvalidOperationException("No scissors left");
+
+                Console.WriteLine("After all rounds: {0}", tournamentResult);
+
+                void SwapPositions(int index1, int index2)
+                {
+                    var temp = lineupList[index1];
+                    lineupList[index1] = lineupList[index2];
+                    lineupList[index2] = temp;
+                }
+            }
+        }
+    }
+
+
 
     private static void Level4()
     {
@@ -155,7 +254,7 @@ public class Program
 
             using var outputWriter = new StreamWriter(outputfilename);
 
-            foreach (var input in tournaments) 
+            foreach (var input in tournaments)
             {
                 var line = input.Replace('R', ' ');
                 line = line.Replace('P', ' ');
@@ -223,7 +322,7 @@ public class Program
                             SwapPositions(i, index);
                             continue;
                         }
-                        
+
                         if (TryFindPairToTheRight("RR", i, out index))
                         {
                             SwapPositions(i, index);
@@ -280,7 +379,9 @@ public class Program
         }
     }
 
-    private static string RunTournamentForRounds(string tournament, int numRounds)
+    private static string RunTournamentForRounds(string tournament, int numRounds) => RunTournamentForRounds(tournament, numRounds, false);
+
+    private static string RunTournamentForRounds(string tournament, int numRounds, bool use5Styles)
     {
         var fighters = tournament;
 
@@ -291,7 +392,14 @@ public class Program
 
             for (int f = 0; f < roundFighters.Length; f += 2)
             {
-                roundResult.Append(Extensions.GetOutCome(roundFighters[f], roundFighters[f + 1]));
+                if (!use5Styles)
+                {
+                    roundResult.Append(Extensions.GetOutCome(roundFighters[f], roundFighters[f + 1]));
+                }
+                else
+                {
+                    roundResult.Append(Extensions.Get5StylesOutCome(roundFighters[f], roundFighters[f + 1]));
+                }
             }
 
             fighters = roundResult.ToString();
@@ -299,6 +407,7 @@ public class Program
 
         return fighters;
     }
+
 
     private static void Level1()
     {
