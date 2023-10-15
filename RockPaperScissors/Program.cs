@@ -26,6 +26,8 @@ public partial class Program
             return clone;
         }
 
+        public int NumFighters => _fighters.Sum();
+
         internal bool IsEmpty()
         {
             return _fighters.Sum() == 0;
@@ -40,6 +42,33 @@ public partial class Program
                     throw new InvalidOperationException($"Fighter type not used: {fighter}");
                 }
             }
+        }
+
+        public static FighterSet Parse(string tournament)
+        {
+            // 3R 11P 2S 15Y 1L
+            var line = tournament.Replace('R', ' ');
+            line = line.Replace('P', ' ');
+            line = line.Replace('S', ' ');
+            line = line.Replace('Y', ' ');
+            line = line.Replace('L', ' ');
+
+            var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            var rocks = int.Parse(parts[0]);
+            var papers = int.Parse(parts[1]);
+            var scissors = int.Parse(parts[2]);
+            var spocks = int.Parse(parts[3]);
+            var lizards = int.Parse(parts[4]);
+
+            return new FighterSet()
+            {
+                [Fighter.Rock] = rocks,
+                [Fighter.Paper] = papers,
+                [Fighter.Scissors] = scissors,
+                [Fighter.Lizard] = lizards,
+                [Fighter.Spock] = spocks,
+            };
         }
     }
 
@@ -74,9 +103,9 @@ public partial class Program
 
     private static void Level5()
     {
-        //var testinput = "98R 4P 10S 16Y 0L";
-        //var testResult = ProcessTournament(testinput);
-
+        var testinput = "98R 4P 10S 16Y 0L";
+        //var testinput = "0R 1P 10S 5Y 0L";
+        var testResult = ProcessTournament(testinput);
 
         for (var inputFileNumber = 1; inputFileNumber <= 5; inputFileNumber++)
         {
@@ -133,34 +162,13 @@ public partial class Program
 
     private static SubResult ProcessTournament(string input)
     {
-        // 3R 11P 2S 15Y 1L
-        //Console.SetCursorPosition(0, Console.GetCursorPosition().Top);
-        var line = input.Replace('R', ' ');
-        line = line.Replace('P', ' ');
-        line = line.Replace('S', ' ');
-        line = line.Replace('Y', ' ');
-        line = line.Replace('L', ' ');
+        // Initialise from input
+        var set = FighterSet.Parse(input);
 
-        var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var rocks = int.Parse(parts[0]);
-        var papers = int.Parse(parts[1]);
-        var scissors = int.Parse(parts[2]);
-        var spocks = int.Parse(parts[3]);
-        var lizards = int.Parse(parts[4]);
+        // Generate
+        var result = GenerateFighterSet(new[] { Fighter.Scissors }, set, set.NumFighters).First();
 
-        var set = new FighterSet();
-        set[Fighter.Rock] = rocks;
-        set[Fighter.Paper] = papers;
-        set[Fighter.Scissors] = scissors;
-        set[Fighter.Lizard] = lizards;
-        set[Fighter.Spock] = spocks;
-
-        var fighterCount = rocks + papers + scissors + spocks + lizards;
-
-        var lineup = new Fighter[fighterCount];
-
-        var result = GenerateFighterSet(new[] { Fighter.Scissors }, set, lineup.Length).First();
-
+        // Validate
         if (!result.RemainingFighters.IsEmpty()) throw new InvalidOperationException("Not all the fighters have been assigned");
 
         set.ValidateLineup(result.Lineup);
@@ -201,6 +209,49 @@ public partial class Program
         foreach (var winner in winners)
         {
             if (!inputSet.Contains(winner)) continue;
+
+            // See if we can cut our grid into halves by filling it up with easy opponents
+            if (winner == Fighter.Scissors && half > 16)
+            {
+                if (inputSet[Fighter.Paper] > 0 && (inputSet[Fighter.Rock] + inputSet[Fighter.Spock]) >= half - 1)
+                {
+                    // We have paper and we have enough paper inferiors to fill up the left half
+                    var newSet = inputSet.Clone();
+                    var lineup = new Fighter[numFighters];
+
+                    var inferiors = new List<Fighter> { Fighter.Rock, Fighter.Spock };
+
+                    var inferiorsToPlace = half - 1;
+                    var insertPosition = 0;
+                    while (inferiorsToPlace > 0 && inferiors.Count > 0)
+                    {
+                        var inferior = inferiors[0]; // take the next best inferior
+                        inferiors.Remove(inferior);
+
+                        // Take as much as we need, but not more than we have
+                        var inferiorsToTake = Math.Min(newSet[inferior], inferiorsToPlace);
+
+                        Array.Fill(lineup, inferior, insertPosition, inferiorsToTake);
+
+                        insertPosition += inferiorsToTake;
+                        inferiorsToPlace -= inferiorsToTake;
+                        newSet[inferior] -= inferiorsToTake;
+                    }
+
+                    // Place one paper at the far right of the grid
+                    lineup[half - 1] = Fighter.Paper;
+                    newSet[Fighter.Paper]--;
+
+                    // Enter recursion to find something suitable for the right half
+                    foreach (var rightHalf in GenerateFighterSet(new[] { winner }, newSet, half))
+                    {
+                        // Copy the returned lineup to the right half of the result
+                        Array.Copy(rightHalf.Lineup, 0, lineup, half, rightHalf.Lineup.Length);
+
+                        yield return new SubResult(rightHalf.RemainingFighters, lineup);
+                    }
+                }
+            }
 
 #if false // Shortcuts
             var inferiors = winner.GetInferiors().ToList();
