@@ -17,18 +17,26 @@ namespace RockPaperScissors
             };
         }
 
-        public static Fighter[] GetInferiors(this Fighter fighter)
+        static Extensions()
         {
-            return fighter switch
+            _inferiors = new[]
             {
-                Fighter.Rock => new[] { Fighter.Rock, Fighter.Lizard, Fighter.Scissors },
-                Fighter.Paper => new[] { Fighter.Rock, Fighter.Spock, Fighter.Paper },
-                Fighter.Spock => new[] { Fighter.Rock, Fighter.Spock, Fighter.Scissors },
-                Fighter.Scissors => new[] { Fighter.Lizard, Fighter.Paper, Fighter.Scissors },
-                Fighter.Lizard => new[] { Fighter.Spock, Fighter.Lizard, Fighter.Paper },
-                _ => throw new ArgumentOutOfRangeException(fighter.ToString()),
+                new[] { Fighter.Rock, Fighter.Lizard, Fighter.Scissors },
+                new[] { Fighter.Rock, Fighter.Spock, Fighter.Paper },
+                new[] { Fighter.Lizard, Fighter.Paper, Fighter.Scissors },
+                new[] { Fighter.Spock, Fighter.Lizard, Fighter.Paper },
+                new[] { Fighter.Rock, Fighter.Spock, Fighter.Scissors },
             };
         }
+
+        private static Fighter[][] _inferiors;
+
+        public static Fighter[] GetInferiors(this Fighter fighter)
+        {
+            return _inferiors[(int)fighter];
+        }
+
+        public static string ToTournament(this Fighter[] lineup) => new string(lineup.Select(f => f.ToChar()).ToArray());
 
         public static char GetOutCome(this string fight) => GetOutCome(fight[0], fight[1]);
 
