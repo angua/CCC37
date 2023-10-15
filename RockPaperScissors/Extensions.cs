@@ -1,7 +1,34 @@
-﻿namespace RockPaperScissors
+﻿using Contest;
+
+namespace RockPaperScissors
 {
     internal static class Extensions
     {
+        public static char ToChar(this Fighter fighter)
+        {
+            return fighter switch
+            {
+                Fighter.Rock => 'R',
+                Fighter.Paper => 'P',
+                Fighter.Scissors => 'S',
+                Fighter.Lizard => 'L',
+                Fighter.Spock => 'Y',
+                _ => throw new ArgumentOutOfRangeException(nameof(fighter))
+            };
+        }
+
+        public static Fighter[] GetInferiors(this Fighter fighter)
+        {
+            return fighter switch
+            {
+                Fighter.Rock => new[] { Fighter.Lizard, Fighter.Scissors, Fighter.Rock },
+                Fighter.Paper => new[] { Fighter.Rock, Fighter.Spock, Fighter.Paper },
+                Fighter.Spock => new[] { Fighter.Rock, Fighter.Scissors, Fighter.Spock  },
+                Fighter.Scissors => new[] { Fighter.Paper, Fighter.Lizard, Fighter.Scissors },
+                Fighter.Lizard => new[] { Fighter.Paper, Fighter.Spock, Fighter.Lizard },
+            };
+        }
+
         public static char GetOutCome(this string fight) => GetOutCome(fight[0], fight[1]);
 
         public static char GetOutCome(char first, char second)

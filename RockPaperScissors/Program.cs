@@ -1,12 +1,30 @@
-﻿using System;
+﻿using RockPaperScissors;
 using System.Text;
-using System.Xml;
-using RockPaperScissors;
 
 namespace Contest;
 
-public class Program
+public partial class Program
 {
+    public class FighterSet
+    {
+        private int[] _fighters = new int[5];
+
+        public int this[Fighter fighter]
+        {
+            get => _fighters[(int)fighter];
+            set => _fighters[(int)fighter] = value;
+        }
+
+        public bool Contains(Fighter fighter) => this[fighter] > 0;
+
+        public FighterSet Clone()
+        {
+            var clone = new FighterSet();
+            Array.Copy(_fighters, clone._fighters, _fighters.Length);
+            return clone;
+        }
+    }
+
     public static void Main(string[] args)
     {
         //Level1();
@@ -46,76 +64,84 @@ public class Program
                 var spocks = int.Parse(parts[3]);
                 var lizards = int.Parse(parts[4]);
 
+                var set = new FighterSet();
+                set[Fighter.Rock] = rocks;
+                set[Fighter.Paper] = papers;
+                set[Fighter.Scissors] = scissors;
+                set[Fighter.Lizard] = lizards;
+                set[Fighter.Spock] = spocks;
+
                 var fighterCount = rocks + papers + scissors + spocks + lizards;
 
-                var lineupList = new Dictionary<int, string>();
+                var lineup = new Fighter[fighterCount];
 
+                var result = GenerateFighterSet(new[] { Fighter.Scissors }, set, lineup.Length).First();
+                var lineupString = new string(result.Lineup.Select(f => f.ToChar()).ToArray());
 
-                // left half
-                if (papers > 0)
-                {
-                    // paper to remove rocks from the left
-                    lineupList[0] = "P";
-                    papers--;
-                }
-                else
-                {
-                    // spock to remove rocks from the left
-                    lineupList[0] = "Y";
-                    spocks--;
-                }
+                outputWriter.WriteLine(lineupString);
+                Console.WriteLine(lineupString);
 
-
-                var firstEmptyPos = 1;
-
-                // fill with rocks until the middle - 1 or out of rocks
-                for (var pos = 1; pos < (int)fighterCount / 2 - 1; pos++)
-                {
-                    if (rocks > 0)
-                    {
-                        lineupList[pos] = "R";
-                        rocks--;
-                        firstEmptyPos = pos + 1;
-                    }
-                    else
-                    {
-                        firstEmptyPos = pos;
-                        break;
-                    }
-                }
-
-                // if more than 50% scissors, place them here
-                if (scissors > fighterCount / 2)
-                {
-
-                }
-
-
-
-
-                Console.WriteLine(string.Join(" ", lineupList));
-
-                var lineup = string.Join("", lineupList);
-                outputWriter.WriteLine(lineup);
-
-                var tournamentResult = RunTournamentForRounds(lineup, (int)Math.Log2(lineupList.Count), true);
+                var tournamentResult = RunTournamentForRounds(lineupString, (int)Math.Log2(fighterCount), true);
 
                 if (tournamentResult.Contains('R')) throw new InvalidOperationException("No rocks allowed here");
                 if (!tournamentResult.Contains('S')) throw new InvalidOperationException("No scissors left");
 
                 Console.WriteLine("After all rounds: {0}", tournamentResult);
-
-                void SwapPositions(int index1, int index2)
-                {
-                    var temp = lineupList[index1];
-                    lineupList[index1] = lineupList[index2];
-                    lineupList[index2] = temp;
-                }
             }
         }
     }
 
+    private static IEnumerable<(FighterSet RemainingFighters, Fighter[] Lineup)> GenerateFighterSet(Fighter[] winners, FighterSet inputSet, int numFighters)
+    {
+        if (numFighters == 2)
+        {
+            // End of the recursion, produce something if we can
+            foreach (var winner in winners)
+            {
+                if (inputSet.Contains(winner))
+                {
+                    // Reduce inputset by one winner
+                    var reducedInputSet = inputSet.Clone();
+                    reducedInputSet[winner]--;
 
+                    foreach (var inferior in winner.GetInferiors())
+                    {
+                        if (reducedInputSet.Contains(inferior))
+                        {
+                            var possibility = reducedInputSet.Clone();
+                            possibility[inferior]--;
+                            yield return (RemainingFighters: possibility, Lineup: new[] { inferior, winner });
+                        }
+                    }
+                }
+            }
+
+            yield break;
+        }
+
+        var half = numFighters >> 1;
+
+        foreach (var winner in winners)
+        {
+            // The right half needs to produce the wanted winner
+            foreach (var rightHalf in GenerateFighterSet(new[] { winner }, inputSet, half))
+            {
+                // Combine this set with the left half who needs to produce somebody the winner can crush
+                foreach (var leftHalf in GenerateFighterSet(winner.GetInferiors(), rightHalf.RemainingFighters, half))
+                {
+                    // Combine left half lineup with the right half
+                    var lineup = new Fighter[numFighters];
+
+                    // Copy the left half lineup to the left half of the resulting lineup
+                    Array.Copy(leftHalf.Lineup, 0, lineup, 0, leftHalf.Lineup.Length);
+                    // Copy the right half lineup to the right half of the resulting lineup
+                    Array.Copy(rightHalf.Lineup, 0, lineup, half, rightHalf.Lineup.Length);
+
+                    yield return (RemainingFighters: leftHalf.RemainingFighters, Lineup: lineup);
+                }
+            }
+        }
+    }
 
     private static void Level4()
     {
