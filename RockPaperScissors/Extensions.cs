@@ -21,11 +21,12 @@ namespace RockPaperScissors
         {
             return fighter switch
             {
-                Fighter.Rock => new[] { Fighter.Lizard, Fighter.Scissors, Fighter.Rock },
+                Fighter.Rock => new[] { Fighter.Rock, Fighter.Lizard, Fighter.Scissors },
                 Fighter.Paper => new[] { Fighter.Rock, Fighter.Spock, Fighter.Paper },
-                Fighter.Spock => new[] { Fighter.Rock, Fighter.Scissors, Fighter.Spock  },
-                Fighter.Scissors => new[] { Fighter.Paper, Fighter.Lizard, Fighter.Scissors },
-                Fighter.Lizard => new[] { Fighter.Paper, Fighter.Spock, Fighter.Lizard },
+                Fighter.Spock => new[] { Fighter.Rock, Fighter.Spock, Fighter.Scissors },
+                Fighter.Scissors => new[] { Fighter.Lizard, Fighter.Paper, Fighter.Scissors },
+                Fighter.Lizard => new[] { Fighter.Spock, Fighter.Lizard, Fighter.Paper },
+                _ => throw new ArgumentOutOfRangeException(fighter.ToString()),
             };
         }
 

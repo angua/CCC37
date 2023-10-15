@@ -1,4 +1,6 @@
 ﻿using RockPaperScissors;
+using System.Diagnostics;
+using System.Linq;
 using System.Text;
 
 namespace Contest;
@@ -23,6 +25,22 @@ public partial class Program
             Array.Copy(_fighters, clone._fighters, _fighters.Length);
             return clone;
         }
+
+        internal bool IsEmpty()
+        {
+            return _fighters.Sum() == 0;
+        }
+
+        internal void ValidateLineup(Fighter[] lineup)
+        {
+            foreach (Fighter fighter in Enum.GetValues(typeof(Fighter)))
+            {
+                if (lineup.Count(f => f == fighter) != this[fighter])
+                {
+                    throw new InvalidOperationException($"Fighter type not used: {fighter}");
+                }
+            }
+        }
     }
 
     public static void Main(string[] args)
@@ -35,6 +53,13 @@ public partial class Program
 
         Console.WriteLine("Done");
     }
+
+    private class SubResult
+    {
+        public FighterSet RemainingFighters { get; set; }
+        public Fighter[] Lineup { get; set; }
+    }
+
     private static void Level5()
     {
         for (var inputFileNumber = 1; inputFileNumber <= 5; inputFileNumber++)
@@ -43,13 +68,26 @@ public partial class Program
             var outputfilename = $"../../../level5_{inputFileNumber}.out";
 
             var lines = File.ReadAllLines(inputfilename).ToList();
-            var tournaments = lines.Skip(1).ToList();
+            var tournaments = lines.Skip(1).Select((tournament, idx) => (Tournament: tournament, Index: idx)).ToList();
+
+            var stopwatch = new Stopwatch();
 
             using var outputWriter = new StreamWriter(outputfilename);
 
-            foreach (var input in tournaments)
+            var count = 0;
+
+            stopwatch.Start();
+
+            var results = new List<SubResult>(Enumerable.Range(1, tournaments.Count).Select(_ => new SubResult()));
+
+            tournaments.AsParallel().ForAll(indexedTournament =>
             {
+                count++;
+                var input = indexedTournament.Tournament;
+
                 // 3R 11P 2S 15Y 1L
+                //Console.SetCursorPosition(0, Console.GetCursorPosition().Top);
+                Console.WriteLine("[File {2}] Thread {3} Processing input: {0}/{1}", count, tournaments.Count, inputFileNumber, Thread.CurrentThread.ManagedThreadId);
 
                 var line = input.Replace('R', ' ');
                 line = line.Replace('P', ' ');
@@ -76,22 +114,35 @@ public partial class Program
                 var lineup = new Fighter[fighterCount];
 
                 var result = GenerateFighterSet(new[] { Fighter.Scissors }, set, lineup.Length).First();
+
+                if (!result.RemainingFighters.IsEmpty()) throw new InvalidOperationException("Not all the fighters have been assigned");
+
+                set.ValidateLineup(result.Lineup);
+
+                //Console.WriteLine("After all rounds: {0}", tournamentResult);
+                results[indexedTournament.Index] = result;
+            });
+
+            stopwatch.Stop();
+
+            // Write all results to the file, in order
+            foreach (var result in results)
+            {
                 var lineupString = new string(result.Lineup.Select(f => f.ToChar()).ToArray());
 
-                outputWriter.WriteLine(lineupString);
-                Console.WriteLine(lineupString);
-
-                var tournamentResult = RunTournamentForRounds(lineupString, (int)Math.Log2(fighterCount), true);
+                var tournamentResult = RunTournamentForRounds(lineupString, (int)Math.Log2(lineupString.Length), true);
 
                 if (tournamentResult.Contains('R')) throw new InvalidOperationException("No rocks allowed here");
                 if (!tournamentResult.Contains('S')) throw new InvalidOperationException("No scissors left");
 
-                Console.WriteLine("After all rounds: {0}", tournamentResult);
+                outputWriter.WriteLine(lineupString);
             }
+
+            Console.WriteLine("\n-------- [{0:0} ms]", stopwatch.ElapsedMilliseconds);
         }
     }
 
-    private static IEnumerable<(FighterSet RemainingFighters, Fighter[] Lineup)> GenerateFighterSet(Fighter[] winners, FighterSet inputSet, int numFighters)
+    private static IEnumerable<SubResult> GenerateFighterSet(Fighter[] winners, FighterSet inputSet, int numFighters)
     {
         if (numFighters == 2)
         {
@@ -110,7 +161,7 @@ public partial class Program
                         {
                             var possibility = reducedInputSet.Clone();
                             possibility[inferior]--;
-                            yield return (RemainingFighters: possibility, Lineup: new[] { inferior, winner });
+                            yield return new SubResult { RemainingFighters = possibility, Lineup = new[] { inferior, winner } };
                         }
                     }
                 }
@@ -123,6 +174,28 @@ public partial class Program
 
         foreach (var winner in winners)
         {
+            //if (numFighters > 16)
+            //{
+            //    // Check if we enough inferiors to just fill up the whole set
+            //    foreach (var inferior in winner.GetInferiors())
+            //    {
+            //        if (winner != inferior && inputSet[inferior] >= numFighters - 1 && inputSet[winner] > 0 ||
+            //            winner == inferior && inputSet[winner] >= numFighters)
+            //        {
+            //            var newSet = inputSet.Clone();
+            //            newSet[inferior] -= numFighters - 1;
+            //            newSet[winner]--;
+            //
+            //            var lineup = new Fighter[numFighters];
+            //            Array.Fill(lineup, inferior, 0, numFighters - 1);
+            //            lineup[lineup.Length - 1] = winner;
+            //
+            //            yield return (RemainingFighters: newSet, Lineup: lineup);
+            //        }
+            //    } 
+            //}
+
+            // Create combinations
             // The right half needs to produce the wanted winner
             foreach (var rightHalf in GenerateFighterSet(new[] { winner }, inputSet, half))
             {
@@ -137,7 +210,7 @@ public partial class Program
                     // Copy the right half lineup to the right half of the resulting lineup
                     Array.Copy(rightHalf.Lineup, 0, lineup, half, rightHalf.Lineup.Length);
 
-                    yield return (RemainingFighters: leftHalf.RemainingFighters, Lineup: lineup);
+                    yield return new SubResult { RemainingFighters = leftHalf.RemainingFighters, Lineup = lineup };
                 }
             }
         }
