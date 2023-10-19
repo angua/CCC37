@@ -110,7 +110,7 @@ public partial class Program
                         {
                             var possibility = reducedInputSet.Clone();
                             possibility[inferior]--;
-                            yield return (RemainingFighters: possibility, Lineup: new[] { inferior, winner });
+                            yield return (RemainingFighters: possibility, Lineup: new[] {  winner, inferior });
                         }
                     }
                 }
@@ -124,10 +124,10 @@ public partial class Program
         foreach (var winner in winners)
         {
             // The right half needs to produce the wanted winner
-            foreach (var rightHalf in GenerateFighterSet(new[] { winner }, inputSet, half))
+            foreach (var rightHalf in GenerateFighterSet(winner.GetInferiors(), inputSet, half))
             {
                 // Combine this set with the left half who needs to produce somebody the winner can crush
-                foreach (var leftHalf in GenerateFighterSet(winner.GetInferiors(), rightHalf.RemainingFighters, half))
+                foreach (var leftHalf in GenerateFighterSet(new[] { winner }, rightHalf.RemainingFighters, half))
                 {
                     // Combine left half lineup with the right half
                     var lineup = new Fighter[numFighters];
