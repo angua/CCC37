@@ -83,7 +83,6 @@ public partial class Program
 
                 var tournamentResult = RunTournamentForRounds(lineupString, (int)Math.Log2(fighterCount), true);
 
-                if (tournamentResult.Contains('R')) throw new InvalidOperationException("No rocks allowed here");
                 if (!tournamentResult.Contains('S')) throw new InvalidOperationException("No scissors left");
 
                 Console.WriteLine("After all rounds: {0}", tournamentResult);
@@ -123,10 +122,17 @@ public partial class Program
 
         foreach (var winner in winners)
         {
-            // The right half needs to produce the wanted winner
-            foreach (var rightHalf in GenerateFighterSet(winner.GetInferiors(), inputSet, half))
+            // Reduce inputset by one winner
+            var reducedInputSet = inputSet.Clone();
+            reducedInputSet[winner]--;
+
+            // The right half needs to produce somebody the winner can crush 
+            foreach (var rightHalf in GenerateFighterSet(winner.GetInferiors(), reducedInputSet, half))
             {
-                // Combine this set with the left half who needs to produce somebody the winner can crush
+                // add winner back to winning side
+                rightHalf.RemainingFighters[winner]++;
+
+                // Combine this set with the left half who needs to produce the wanted winner
                 foreach (var leftHalf in GenerateFighterSet(new[] { winner }, rightHalf.RemainingFighters, half))
                 {
                     // Combine left half lineup with the right half
