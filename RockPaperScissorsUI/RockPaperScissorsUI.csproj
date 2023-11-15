@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\CCC38\CCC38\CommonWPF\CommonWPF\CommonWPF.csproj" />
     <ProjectReference Include="..\RockPaperScissors\RockPaperScissors.csproj" />
   </ItemGroup>
 

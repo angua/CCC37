@@ -1,6 +1,4 @@
-﻿using Contest;
-
-namespace RockPaperScissors
+﻿namespace RockPaperScissors
 {
     internal static class Extensions
     {

@@ -1,4 +1,4 @@
-﻿namespace Contest;
+﻿namespace RockPaperScissors;
 
 public enum Fighter
 {
