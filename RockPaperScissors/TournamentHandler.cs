@@ -58,4 +58,35 @@ public static class TournamentHandler
         return tournamentList;
     }
 
+    public static string RunTournamentForRounds(string tournament, int numRounds) => RunTournamentForRounds(tournament, numRounds, false);
+
+    public static string RunTournamentForRounds(string tournament, int numRounds, bool use5Styles)
+    {
+        var fighters = tournament;
+
+        for (int round = 0; round < numRounds; round++)
+        {
+            var roundFighters = fighters.ToArray();
+            var roundResult = new StringBuilder();
+
+            for (int f = 0; f < roundFighters.Length; f += 2)
+            {
+                if (!use5Styles)
+                {
+                    roundResult.Append(Extensions.GetOutCome(roundFighters[f], roundFighters[f + 1]));
+                }
+                else
+                {
+                    roundResult.Append(Extensions.Get5StylesOutCome(roundFighters[f], roundFighters[f + 1]));
+                }
+            }
+
+            fighters = roundResult.ToString();
+        }
+
+        return fighters;
+    }
+
+
+
 }

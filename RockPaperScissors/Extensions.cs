@@ -1,6 +1,6 @@
 ﻿namespace RockPaperScissors
 {
-    internal static class Extensions
+    public static class Extensions
     {
         public static char ToChar(this Fighter fighter)
         {

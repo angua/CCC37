@@ -74,7 +74,7 @@ public class Program
                 Console.WriteLine(lineupString);
 
                 // check if scissors really win
-                var tournamentResult = RunTournamentForRounds(lineupString, (int)Math.Log2(fighterCount), true);
+                var tournamentResult = TournamentHandler.RunTournamentForRounds(lineupString, (int)Math.Log2(fighterCount), true);
                 if (!tournamentResult.Contains('S')) throw new InvalidOperationException("No scissors left");
 
             }
@@ -312,7 +312,7 @@ public class Program
                 var lineup = string.Join("", lineupList);
                 outputWriter.WriteLine(lineup);
 
-                var tournamentResult = RunTournamentForRounds(lineup, (int)Math.Log2(lineupList.Count));
+                var tournamentResult = TournamentHandler.RunTournamentForRounds(lineup, (int)Math.Log2(lineupList.Count));
 
                 if (tournamentResult.Contains('R')) throw new InvalidOperationException("No rocks allowed here");
                 if (!tournamentResult.Contains('S')) throw new InvalidOperationException("No scissors left");
@@ -423,7 +423,7 @@ public class Program
                 var lineup = string.Join("", pairs);
                 outputWriter.WriteLine(lineup);
 
-                var tournamentResult = RunTournamentForRounds(lineup, 2);
+                var tournamentResult = TournamentHandler.RunTournamentForRounds(lineup, 2);
 
                 if (tournamentResult.Contains('R')) throw new InvalidOperationException("No rocks allowed here");
                 if (!tournamentResult.Contains('S')) throw new InvalidOperationException("No scissors left");
@@ -459,40 +459,11 @@ public class Program
 
             foreach (var tournament in tournaments)
             {
-                var fighters = RunTournamentForRounds(tournament, 2);
+                var fighters = TournamentHandler.RunTournamentForRounds(tournament, 2);
 
                 outputWriter.WriteLine(fighters);
             }
         }
-    }
-
-    private static string RunTournamentForRounds(string tournament, int numRounds) => RunTournamentForRounds(tournament, numRounds, false);
-
-    private static string RunTournamentForRounds(string tournament, int numRounds, bool use5Styles)
-    {
-        var fighters = tournament;
-
-        for (int round = 0; round < numRounds; round++)
-        {
-            var roundFighters = fighters.ToArray();
-            var roundResult = new StringBuilder();
-
-            for (int f = 0; f < roundFighters.Length; f += 2)
-            {
-                if (!use5Styles)
-                {
-                    roundResult.Append(Extensions.GetOutCome(roundFighters[f], roundFighters[f + 1]));
-                }
-                else
-                {
-                    roundResult.Append(Extensions.Get5StylesOutCome(roundFighters[f], roundFighters[f + 1]));
-                }
-            }
-
-            fighters = roundResult.ToString();
-        }
-
-        return fighters;
     }
 
 
