@@ -16,8 +16,12 @@ namespace RockPaperScissorsUI
             {
                 return ((FrameworkElement)container).FindResource("FighterTemplate") as DataTemplate;
             }
+            else
+            {
+                return ((FrameworkElement)container).FindResource("ConnectionLineTemplate") as DataTemplate;
 
-            return ((FrameworkElement)container).FindResource("FighterTemplate") as DataTemplate;
+            }
+
 
         }
     }

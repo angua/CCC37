@@ -9,21 +9,71 @@
         Title="MainWindow" WindowState="Maximized" Height="1000" Width="1800">
 
     <Window.Resources>
-        <System:Double x:Key="FighterHeight">35</System:Double>
         <System:Double x:Key="FighterWidth">25</System:Double>
+        <System:Double x:Key="FighterHeight">35</System:Double>
         <System:Double x:Key="DistanceX">40</System:Double>
         <System:Double x:Key="DistanceY">60</System:Double>
 
         <local:PositionXConverter x:Key="PositionXConverter" />
         <local:PositionYConverter x:Key="PositionYConverter" />
         <local:FighterColorConverter x:Key="FighterColorConverter" />
-
+        <local:StartPositionXConverter x:Key="StartPositionXConverter" />
+        <local:StartPositionYConverter x:Key="StartPositionYConverter" />
+        <local:EndPositionXConverter x:Key="EndPositionXConverter" />
+        <local:EndPositionYConverter x:Key="EndPositionYConverter" />
 
         <DataTemplate x:Key="FighterTemplate">
-            <Border Height="{StaticResource FighterHeight}" Width="{StaticResource FighterWidth}" BorderThickness="2" BorderBrush="{Binding FighterType, Converter={StaticResource FighterColorConverter}}">
-                <TextBlock Text="{Binding FighterType}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{Binding FighterType, Converter={StaticResource FighterColorConverter}}" />
+            <Border Height="{StaticResource FighterHeight}" Width="{StaticResource FighterWidth}" BorderThickness="2" 
+                    BorderBrush="{Binding FighterType, Converter={StaticResource FighterColorConverter}}">
+                <TextBlock Text="{Binding FighterType}" HorizontalAlignment="Center" VerticalAlignment="Center" 
+                           Foreground="{Binding FighterType, Converter={StaticResource FighterColorConverter}}" />
             </Border>
         </DataTemplate>
+        
+        <DataTemplate x:Key="ConnectionLineTemplate">
+            <Line Stroke="{Binding FighterType, Converter={StaticResource FighterColorConverter}}" StrokeThickness="2">
+                <Line.X1>
+                    <MultiBinding Converter="{StaticResource StartPositionXConverter}">
+                        <Binding Path="StartPositionX" />
+                        <Binding Source="{StaticResource FighterWidth}" />
+                        <Binding Source="{StaticResource FighterHeight}" />
+                        <Binding Source="{StaticResource DistanceX}" />
+                        <Binding Source="{StaticResource DistanceY}" />
+                    </MultiBinding>
+                </Line.X1>
+                <Line.Y1>
+                    <MultiBinding Converter="{StaticResource StartPositionYConverter}">
+                        <Binding Path="StartPositionY" />
+                        <Binding Source="{StaticResource FighterWidth}" />
+                        <Binding Source="{StaticResource FighterHeight}" />
+                        <Binding Source="{StaticResource DistanceX}" />
+                        <Binding Source="{StaticResource DistanceY}" />
+                    </MultiBinding>
+                </Line.Y1>
+                <Line.X2>
+                    <MultiBinding Converter="{StaticResource EndPositionXConverter}">
+                        <Binding Path="EndPositionX" />
+                        <Binding Source="{StaticResource FighterWidth}" />
+                        <Binding Source="{StaticResource FighterHeight}" />
+                        <Binding Source="{StaticResource DistanceX}" />
+                        <Binding Source="{StaticResource DistanceY}" />
+                    </MultiBinding>
+                </Line.X2>
+                <Line.Y2>
+                    <MultiBinding Converter="{StaticResource EndPositionYConverter}">
+                        <Binding Path="EndPositionY" />
+                        <Binding Source="{StaticResource FighterWidth}" />
+                        <Binding Source="{StaticResource FighterHeight}" />
+                        <Binding Source="{StaticResource DistanceX}" />
+                        <Binding Source="{StaticResource DistanceY}" />
+                    </MultiBinding>
+                </Line.Y2>
+
+            </Line>
+        </DataTemplate>
+
+
+
     </Window.Resources>
 
     <Grid Margin="20">
@@ -76,16 +126,18 @@
 
             </Grid>
 
-            <Button Margin="0,20,0,0" Padding="6" Command="{Binding ShowSolution}" Content="Show Solution"></Button>
+            <TextBlock Margin="0,20,0,0" Text="Winner:" />
+            <TextBlock Text="{Binding Winner}" />
 
         </StackPanel>
 
-        <ScrollViewer Grid.Column="1" Margin="20,0,0,0">
+        <ScrollViewer Width="Auto" Grid.Column="1" Margin="20,0,0,0" VerticalScrollBarVisibility="Visible"  HorizontalScrollBarVisibility="Visible">
             <ItemsControl ItemsSource="{Binding VisualTournament}">
 
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <Canvas />
+                        <Canvas Width="{Binding CurrentVisualTournament.FighterCount, 
+                            Converter={StaticResource PositionXConverter}, ConverterParameter={StaticResource DistanceX}}" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
 

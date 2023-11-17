@@ -8,7 +8,7 @@ class PositionXConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return (double)parameter * (double)value;
+        return (double)parameter * System.Convert.ToDouble(value);
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

@@ -1,17 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace RockPaperScissorsUI;
 
-namespace RockPaperScissorsUI
+class VisualFighter
 {
-    class VisualFighter
-    {
-        public char FighterType { get; set; }
+    public char FighterType { get; set; }
 
-        public double PositionX { get; set; }
-        public double PositionY { get; set; }
-    }
+    public double PositionX { get; set; }
+    public double PositionY { get; set; }
 }
