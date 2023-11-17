@@ -16,10 +16,39 @@ public class Program
         //Level2();
         //Level3();
         //Level4();
-        Level5();
+        //Level5();
+        Level6();
 
         Console.WriteLine("Done");
     }
+
+    private static void Level6()
+    {
+        for (var inputFileNumber = 1; inputFileNumber <= 5; inputFileNumber++)
+        {
+            // parse
+            var inputfilename = $"../../../../Files/level6_{inputFileNumber}.in";
+            var outputfilename = $"../../../../Files/level6_{inputFileNumber}.out";
+
+            Console.WriteLine($"input file {inputFileNumber}");
+
+            var lines = File.ReadAllLines(inputfilename).ToList();
+            var lineups = lines.Skip(1).ToList();
+
+            using var outputWriter = new StreamWriter(outputfilename);
+
+            for (var i = 0; i <= lineups.Count; i++)
+            {
+                Console.WriteLine($"Input {i}");
+
+                var lineup = lineups[i];
+
+
+            }
+        }
+    }
+
+
     private static void Level5()
     {
         var tournaments = TournamentHandler.ParseTournaments(5);
@@ -38,7 +67,7 @@ public class Program
                 // 3R 11P 2S 15Y 1L
 
                 var tournament = currentTournaments.First(t => t.TournamentNumber == inputNumber);
-                
+
                 var lineupString = TournamentHandler.GuessSolution(tournament);
 
                 outputWriter.WriteLine(lineupString);
@@ -48,7 +77,7 @@ public class Program
                 // check if scissors really win
                 var tournamentResult = TournamentHandler.RunTournamentForRounds(lineupString, (int)Math.Log2(tournament.FigherCount), true);
                 if (!tournamentResult.Contains('S')) throw new InvalidOperationException("No scissors left");
-                
+
                 if (lineupString.Count(c => c == 'S') != tournament.Set[Fighter.Scissors])
                 {
                     throw new InvalidOperationException("Incorrect number of scissors");
