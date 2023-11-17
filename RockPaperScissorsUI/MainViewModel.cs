@@ -34,11 +34,11 @@ namespace RockPaperScissorsUI
             set
             {
                 SetValue(value);
-                CurrentTournament = new VisualTournament(_tournaments.FirstOrDefault(t => t.FileNumber == FileNumber && t.TournamentNumber == value));
+                CurrentVisualTournament = new VisualTournament(_tournaments.FirstOrDefault(t => t.FileNumber == FileNumber && t.TournamentNumber == value));
             }
         }
 
-        public VisualTournament? CurrentTournament
+        public VisualTournament? CurrentVisualTournament
         {
             get => GetValue<VisualTournament>();
             set => SetValue(value);
@@ -88,60 +88,13 @@ namespace RockPaperScissorsUI
         {
             _tournamentRounds.Clear();
 
-            var result = GuessSolution(CurrentTournament);
-            _tournamentRounds.Add(result);
-
-            while (result.Count() > 1)
-            {
-                result = TournamentHandler.RunTournamentForRounds(result, 1, true);
-                _tournamentRounds.Add(result);
-            }
+            var result = TournamentHandler.GuessSolution(CurrentVisualTournament.CurrentTournament);
+            _tournamentRounds = TournamentHandler.CreateRounds(result);
 
             CreateVisuals(_tournamentRounds);
 
         }
 
-
-        private string GuessSolution(VisualTournament? currentTournament)
-        {
-            var lineup = new Fighter[currentTournament.FighterCount];
-
-            var reducedInputSet = currentTournament.Set.Clone();
-
-            for (int i = 0; i < currentTournament.FighterCount; i++)
-            {
-                if (reducedInputSet[Fighter.Scissors] > 0)
-                {
-                    lineup[i] = Fighter.Scissors;
-                    reducedInputSet[Fighter.Scissors]--;
-                }
-                else if (reducedInputSet[Fighter.Paper] > 0)
-                {
-                    lineup[i] = Fighter.Paper;
-                    reducedInputSet[Fighter.Paper]--;
-                }
-                else if (reducedInputSet[Fighter.Lizard] > 0)
-                {
-                    lineup[i] = Fighter.Lizard;
-                    reducedInputSet[Fighter.Lizard]--;
-                }
-
-                else if (reducedInputSet[Fighter.Spock] > 0)
-                {
-                    lineup[i] = Fighter.Spock;
-                    reducedInputSet[Fighter.Spock]--;
-                }
-                else if (reducedInputSet[Fighter.Rock] > 0)
-                {
-                    lineup[i] = Fighter.Rock;
-                    reducedInputSet[Fighter.Rock]--;
-                }
-
-            }
-
-            return new string(lineup.Select(f => f.ToChar()).ToArray());
-
-        }
 
         private void CreateVisuals(List<string> tournamentRounds)
         {

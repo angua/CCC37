@@ -6,21 +6,21 @@ namespace RockPaperScissorsUI;
 
 internal class VisualTournament : ViewModelBase
 {
-    private Tournament _tournament;
+    public Tournament CurrentTournament { get; private set; }
     public VisualTournament(Tournament tournament)
     {
-       _tournament = tournament;
+       CurrentTournament = tournament;
 
         for (int i = 0; i < 5; i++)
         {
-            VisualSet.Add(_tournament.Set[(Fighter)i]);
+            VisualSet.Add(CurrentTournament.Set[(Fighter)i]);
         }
     }
 
     public ObservableCollection<int> VisualSet { get; set; } = new();
 
-    public FighterSet Set => _tournament.Set;
+    public FighterSet Set => CurrentTournament.Set;
 
-    public int FighterCount => _tournament.FigherCount;
+    public int FighterCount => CurrentTournament.FigherCount;
 
 }

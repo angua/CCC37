@@ -42,8 +42,8 @@
                 <Button Padding="6" Margin="10,0,0,0"  Command="{Binding NextInput}" Content="Next"></Button>
             </StackPanel>
 
-            <TextBlock Text="Fighter count:" />
-            <TextBlock Text="{Binding CurrentTournament.FighterCount}" />
+            <TextBlock Margin="0,20,0,0"  Text="Fighter count:" />
+            <TextBlock Text="{Binding CurrentVisualTournament.FighterCount}" />
 
             <Grid Margin="0,20,0,0">
                 <Grid.ColumnDefinitions>
@@ -60,23 +60,23 @@
                 </Grid.RowDefinitions>
 
                 <TextBlock Grid.Row="0"  Grid.Column="0" Text="Rocks" />
-                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentTournament.Set[0]}" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentVisualTournament.Set[0]}" />
 
                 <TextBlock Grid.Row="1"  Grid.Column="0" Text="Papers" />
-                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CurrentTournament.Set[1]}" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CurrentVisualTournament.Set[1]}" />
 
                 <TextBlock Grid.Row="2"  Grid.Column="0" Text="Scissors" />
-                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CurrentTournament.Set[2]}" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CurrentVisualTournament.Set[2]}" />
 
                 <TextBlock Grid.Row="3"  Grid.Column="0" Text="Lizards" />
-                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CurrentTournament.Set[3]}" />
+                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CurrentVisualTournament.Set[3]}" />
 
                 <TextBlock Grid.Row="4"  Grid.Column="0" Text="Spocks" />
-                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding CurrentTournament.Set[4]}" />
+                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding CurrentVisualTournament.Set[4]}" />
 
             </Grid>
 
-            <Button Padding="6" Margin="10,0,0,0"  Command="{Binding ShowSolution}" Content="Show Solution"></Button>
+            <Button Margin="0,20,0,0" Padding="6" Command="{Binding ShowSolution}" Content="Show Solution"></Button>
 
         </StackPanel>
 

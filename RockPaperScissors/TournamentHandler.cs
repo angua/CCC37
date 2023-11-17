@@ -88,5 +88,62 @@ public static class TournamentHandler
     }
 
 
+    public static string GuessSolution(Tournament tournament)
+    {
+        var lineup = new Fighter[tournament.FigherCount];
+
+        var reducedInputSet = tournament.Set.Clone();
+
+        for (int i = 0; i < tournament.FigherCount; i++)
+        {
+            if (reducedInputSet[Fighter.Scissors] > 0)
+            {
+                lineup[i] = Fighter.Scissors;
+                reducedInputSet[Fighter.Scissors]--;
+            }
+            else if (reducedInputSet[Fighter.Paper] > 0)
+            {
+                lineup[i] = Fighter.Paper;
+                reducedInputSet[Fighter.Paper]--;
+            }
+            else if (reducedInputSet[Fighter.Lizard] > 0)
+            {
+                lineup[i] = Fighter.Lizard;
+                reducedInputSet[Fighter.Lizard]--;
+            }
+
+            else if (reducedInputSet[Fighter.Spock] > 0)
+            {
+                lineup[i] = Fighter.Spock;
+                reducedInputSet[Fighter.Spock]--;
+            }
+            else if (reducedInputSet[Fighter.Rock] > 0)
+            {
+                lineup[i] = Fighter.Rock;
+                reducedInputSet[Fighter.Rock]--;
+            }
+
+        }
+
+        return new string(lineup.Select(f => f.ToChar()).ToArray());
+
+    }
+
+    public static List<string> CreateRounds(string result)
+    {
+        var results = new List<string>
+        {
+            result
+        };
+
+        while (result.Count() > 1)
+        {
+            result = RunTournamentForRounds(result, 1, true);
+            results.Add(result);
+        }
+
+        return results;
+    }
+
 
 }

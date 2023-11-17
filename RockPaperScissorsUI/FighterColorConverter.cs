@@ -15,7 +15,7 @@ namespace RockPaperScissorsUI
             return value switch
             {
                 'R' => "#494d53",
-                'P' => "#f6ff00",
+                'P' => "#00f3f6",
                 'S' => "#0066ff",
                 'Y' => "#ff6000",
                 'L' => "#1adf00",
