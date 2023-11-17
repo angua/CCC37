@@ -18,4 +18,6 @@ public class FighterSet
         Array.Copy(_fighters, clone._fighters, _fighters.Length);
         return clone;
     }
+
+    public int Count => _fighters.Sum();
 }

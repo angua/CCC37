@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -91,42 +93,152 @@ public static class TournamentHandler
     public static string GuessSolution(Tournament tournament)
     {
         var lineup = new Fighter[tournament.FigherCount];
+        var inputSet = tournament.Set.Clone();
 
-        var reducedInputSet = tournament.Set.Clone();
+        // first positions get scissors
+        var powerOf2Scissors = (int)Math.Log2(inputSet[Fighter.Scissors]);
+        var posAfterScissors = (int)Math.Pow(2, powerOf2Scissors);
 
-        for (int i = 0; i < tournament.FigherCount; i++)
+        for (int i = 0; i < posAfterScissors; i++)
         {
-            if (reducedInputSet[Fighter.Scissors] > 0)
-            {
-                lineup[i] = Fighter.Scissors;
-                reducedInputSet[Fighter.Scissors]--;
-            }
-            else if (reducedInputSet[Fighter.Paper] > 0)
-            {
-                lineup[i] = Fighter.Paper;
-                reducedInputSet[Fighter.Paper]--;
-            }
-            else if (reducedInputSet[Fighter.Lizard] > 0)
-            {
-                lineup[i] = Fighter.Lizard;
-                reducedInputSet[Fighter.Lizard]--;
-            }
-
-            else if (reducedInputSet[Fighter.Spock] > 0)
-            {
-                lineup[i] = Fighter.Spock;
-                reducedInputSet[Fighter.Spock]--;
-            }
-            else if (reducedInputSet[Fighter.Rock] > 0)
-            {
-                lineup[i] = Fighter.Rock;
-                reducedInputSet[Fighter.Rock]--;
-            }
-
+            lineup[i] = Fighter.Scissors;
+            inputSet[Fighter.Scissors]--;
         }
+
+        // second half (losers)
+        var half = tournament.FigherCount / 2;
+
+        while (inputSet.Count > 0)
+        {
+            FillSecondHalf(lineup, inputSet, half);
+            half = half >> 1;
+        }
+
 
         return new string(lineup.Select(f => f.ToChar()).ToArray());
 
+    }
+
+    private static void FillSecondHalf(Fighter[] lineup, FighterSet inputSet, int half)
+    {
+        // Paper Rocks strategy
+        // PRRRRRRRR
+        if (inputSet.Count > 1 && inputSet[Fighter.Paper] > 0 && inputSet[Fighter.Rock] >= half - 1)
+        {
+            lineup[half] = Fighter.Paper;
+            inputSet[Fighter.Paper]--;
+
+            for (int i = 1; i < half; i++)
+            {
+                lineup[half + i] = Fighter.Rock;
+            }
+            inputSet[Fighter.Rock] -= half - 1;
+
+        }
+        // Spock-Strategy
+        // remove rocks using Spocks then get rid of Spock with paper or lizard
+        // sorry Mr. Spock, don't live long and prosper
+        // LY YR YRRR YRRRRRRR ...
+        else if (inputSet.Count > 1 &&
+            (inputSet[Fighter.Lizard] > 0 || inputSet[Fighter.Paper] > 0) &&
+            inputSet[Fighter.Spock] >= (int)Math.Log2(half) &&
+            inputSet[Fighter.Spock] + inputSet[Fighter.Rock] >= half - 1)
+        {
+            if (inputSet[Fighter.Lizard] > 0)
+            {
+                lineup[half] = Fighter.Lizard;
+                inputSet[Fighter.Lizard]--;
+            }
+            else
+            {
+                lineup[half] = Fighter.Paper;
+                inputSet[Fighter.Paper]--;
+            }
+
+            lineup[half + 1] = Fighter.Spock;
+            inputSet[Fighter.Spock]--;
+
+            for (int i = 2; i < half; i++)
+            {
+                if (BitOperations.IsPow2(i))
+                {
+                    lineup[half + i] = Fighter.Spock;
+                    inputSet[Fighter.Spock]--;
+                }
+                else if (inputSet[Fighter.Rock] > 0)
+                {
+                    lineup[half + i] = Fighter.Rock;
+                    inputSet[Fighter.Rock]--;
+                }
+                else
+                {
+                    lineup[half + i] = Fighter.Spock;
+                    inputSet[Fighter.Spock]--;
+                }
+            }
+
+        }
+        
+        else
+        {
+            // try placing lizard or paper at the first position
+            
+             if (inputSet[Fighter.Paper] > 0)
+            {
+                lineup[half] = Fighter.Paper;
+                inputSet[Fighter.Paper]--;
+            }
+            else if(inputSet[Fighter.Lizard] > 0)
+            {
+                lineup[half] = Fighter.Lizard;
+                inputSet[Fighter.Lizard]--;
+            }
+            else if (inputSet[Fighter.Spock] > 0)
+            {
+                lineup[half] = Fighter.Spock;
+                inputSet[Fighter.Spock]--;
+            }
+            else if (inputSet[Fighter.Rock] > 0)
+            {
+                lineup[half] = Fighter.Rock;
+                inputSet[Fighter.Rock]--;
+            }
+            else if (inputSet[Fighter.Scissors] > 0)
+            {
+                lineup[half] = Fighter.Scissors;
+                inputSet[Fighter.Scissors]--;
+            }
+
+            // just fill the rest with whatever we have
+            for (int i = 1; i < half; i++)
+            {
+                if (inputSet[Fighter.Spock] > 0)
+                {
+                    lineup[half + i] = Fighter.Spock;
+                    inputSet[Fighter.Spock]--;
+                }
+                else if (inputSet[Fighter.Rock] > 0)
+                {
+                    lineup[half + i] = Fighter.Rock;
+                    inputSet[Fighter.Rock]--;
+                }
+                else if (inputSet[Fighter.Scissors] > 0)
+                {
+                    lineup[half + i] = Fighter.Scissors;
+                    inputSet[Fighter.Scissors]--;
+                }
+                else if (inputSet[Fighter.Lizard] > 0)
+                {
+                    lineup[half + i] = Fighter.Lizard;
+                    inputSet[Fighter.Lizard]--;
+                }
+                else if (inputSet[Fighter.Paper] > 0)
+                {
+                    lineup[half + i] = Fighter.Paper;
+                    inputSet[Fighter.Paper]--;
+                }
+            }
+        }
     }
 
     public static List<string> CreateRounds(string result)
