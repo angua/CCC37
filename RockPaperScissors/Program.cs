@@ -1,4 +1,5 @@
 ﻿using RockPaperScissors;
+using System.Linq;
 using System.Numerics;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -31,51 +32,43 @@ public class Program
             var currentTournaments = tournaments.Where(t => t.FileNumber == inputFileNumber).ToList();
             Console.WriteLine($"input file {inputFileNumber}");
 
-            var inputCount = 0;
-
             for (var inputNumber = 1; inputNumber <= currentTournaments.Count; inputNumber++)
             {
-                Console.WriteLine($"Input {++inputNumber}");
+                Console.WriteLine($"Input {inputNumber}");
                 // 3R 11P 2S 15Y 1L
 
                 var tournament = currentTournaments.First(t => t.TournamentNumber == inputNumber);
-
-                var input = "1R 29P 1S 1Y 0L";
-
-
-                var line = input.Replace('R', ' ');
-                line = line.Replace('P', ' ');
-                line = line.Replace('S', ' ');
-                line = line.Replace('Y', ' ');
-                line = line.Replace('L', ' ');
-
-                var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                var rocks = int.Parse(parts[0]);
-                var papers = int.Parse(parts[1]);
-                var scissors = int.Parse(parts[2]);
-                var spocks = int.Parse(parts[3]);
-                var lizards = int.Parse(parts[4]);
-
-                var set = new FighterSet();
-                set[Fighter.Rock] = rocks;
-                set[Fighter.Paper] = papers;
-                set[Fighter.Scissors] = scissors;
-                set[Fighter.Lizard] = lizards;
-                set[Fighter.Spock] = spocks;
-
-                var fighterCount = rocks + papers + scissors + spocks + lizards;
-
-                var lineup = new Fighter[fighterCount];
-
-                var result = GenerateFighterSet(new[] { Fighter.Scissors }, set, lineup.Length).First();
-                var lineupString = new string(result.Lineup.Select(f => f.ToChar()).ToArray());
+                
+                var lineupString = TournamentHandler.GuessSolution(tournament);
 
                 outputWriter.WriteLine(lineupString);
                 Console.WriteLine(lineupString);
 
+                // (in)sanity check
                 // check if scissors really win
-                var tournamentResult = TournamentHandler.RunTournamentForRounds(lineupString, (int)Math.Log2(fighterCount), true);
+                var tournamentResult = TournamentHandler.RunTournamentForRounds(lineupString, (int)Math.Log2(tournament.FigherCount), true);
                 if (!tournamentResult.Contains('S')) throw new InvalidOperationException("No scissors left");
+                
+                if (lineupString.Count(c => c == 'S') != tournament.Set[Fighter.Scissors])
+                {
+                    throw new InvalidOperationException("Incorrect number of scissors");
+                }
+                if (lineupString.Count(c => c == 'R') != tournament.Set[Fighter.Rock])
+                {
+                    throw new InvalidOperationException("Incorrect number of rocks");
+                }
+                if (lineupString.Count(c => c == 'P') != tournament.Set[Fighter.Paper])
+                {
+                    throw new InvalidOperationException("Incorrect number of papers");
+                }
+                if (lineupString.Count(c => c == 'L') != tournament.Set[Fighter.Lizard])
+                {
+                    throw new InvalidOperationException("Incorrect number of lizards");
+                }
+                if (lineupString.Count(c => c == 'Y') != tournament.Set[Fighter.Spock])
+                {
+                    throw new InvalidOperationException("Incorrect number of Spocks");
+                }
 
             }
         }
