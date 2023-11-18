@@ -11,6 +11,8 @@ public class Tournament
 
     public string Lineup { get; set; }
 
+    public List<string> Rounds { get; set; } = new();
+
 
     public int FigherCount { get; set; }
 }

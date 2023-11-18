@@ -40,14 +40,15 @@ public static class TournamentHandler
                 }
                 else
                 {
+                    // Level 6
                     // parse lineup
-                    var set = CreateSet(input);
                     tournamentList.Add(new Tournament()
                     {
                         FileNumber = inputFileNumber,
                         TournamentNumber = ++inputCount,
-                        Set = set,
+                        Set = CreateSet(input),
                         Lineup = input,
+                        Rounds = CreateRounds(input),
                         FigherCount = input.Length,
                         Level = level
                     });
@@ -300,9 +301,153 @@ public static class TournamentHandler
         }
     }
 
+
     public static string SolveLevel6(Tournament tournament)
     {
-        return FirstGuess(tournament);
+        // Start with placing Scissors at the winning round and work back up through the rounds trying differnt combinations
+
+        // last round producing the winner
+        var currentRound = tournament.Rounds.Count - 1;
+        // lineup position of the winner
+        var pos = 0;
+
+        var winner = Fighter.Scissors;
+
+        TryGetCombination(tournament, winner, pos, currentRound, out List<StartFighter> StartFighters);
+
+        var result = tournament.Lineup.ToArray();
+        foreach (var  fighter in StartFighters) 
+        {
+            result[fighter.Position] = fighter.StartFighterType.ToChar();
+        }
+
+        return string.Join("", result);
+    }
+
+
+    private static bool TryGetCombination(Tournament tournament, Fighter winner, int pos, int currentRound, out List<StartFighter> startFighters)
+    {
+        if (currentRound == 0)
+        {
+            // we have reached the top row
+            // just position the winner here
+            startFighters = new List<StartFighter>
+            {
+                new StartFighter()
+                {
+                    Position = pos,
+                    StartFighterType = winner
+                }
+            };
+            return true;
+        }
+
+
+        var possibleAncestorCombinations = new List<(Fighter, Fighter)>();
+
+        startFighters = new List<StartFighter>();
+
+        var inferiors = winner.GetInferiors();
+
+        // get the "ancestors" of the current fighter
+        var ancestorRound = currentRound - 1;
+
+        var leftancestorPos = pos * 2;
+        var leftAncestor = GetFighter(tournament.Rounds[ancestorRound][leftancestorPos]);
+
+        var rightancestorPos = pos * 2 + 1;
+        var rightAncestor = GetFighter(tournament.Rounds[ancestorRound][rightancestorPos]);
+
+
+        // both ancestors unknown
+        if (leftAncestor == Fighter.Unknown && rightAncestor == Fighter.Unknown)
+        {
+            foreach (var inferior in inferiors)
+            {
+                possibleAncestorCombinations.Add((winner, inferior));
+                possibleAncestorCombinations.Add((inferior, winner));
+            }
+
+            foreach (var combination in possibleAncestorCombinations)
+            {
+                // go down both branches
+
+                var leftfound = TryGetCombination(tournament, combination.Item1, leftancestorPos, ancestorRound, out var leftstartFighters);
+                var rightfound = TryGetCombination(tournament, combination.Item2, rightancestorPos, ancestorRound, out var rightstartFighters);
+
+                if (leftfound && rightfound)
+                {
+                    startFighters.AddRange(leftstartFighters);
+                    startFighters.AddRange(rightstartFighters);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // only left unknown
+        else if (leftAncestor == Fighter.Unknown)
+        {
+            // go down left branch
+            if (rightAncestor == winner)
+            {
+                foreach (var inferior in inferiors)
+                {
+                    if (TryGetCombination(tournament, inferior, leftancestorPos, ancestorRound, out var leftstartFighters))
+                    {
+                        startFighters.AddRange(leftstartFighters);
+                        return true;
+                    }
+                }
+                return false;
+            }
+            else if (inferiors.Contains(rightAncestor))
+            {
+                if (TryGetCombination(tournament, winner, leftancestorPos, ancestorRound, out var leftstartFighters))
+                {
+                    startFighters.AddRange(leftstartFighters);
+                    return true;
+                }
+                return false;
+            }
+            else
+            {
+                return false;
+            }
+
+        }
+
+        // only right unknown
+        else
+        {
+            // go down right branch
+            if (leftAncestor == winner)
+            {
+                foreach (var inferior in inferiors)
+                {
+                    if (TryGetCombination(tournament, inferior, rightancestorPos, ancestorRound, out var rightstartFighters))
+                    {
+                        startFighters.AddRange(rightstartFighters);
+                        return true;
+                    }
+                }
+                return false;
+            }
+            else if (inferiors.Contains(leftAncestor))
+            {
+                if (TryGetCombination(tournament, winner, rightancestorPos, ancestorRound, out var rightstartFighters))
+                {
+                    startFighters.AddRange(rightstartFighters);
+                    return true;
+                }
+                return false;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
     }
 
     private static string FirstGuess(Tournament tournament)
@@ -346,20 +491,34 @@ public static class TournamentHandler
         return string.Join("", lineup);
     }
 
-    public static List<string> CreateRounds(string result)
+    public static List<string> CreateRounds(string lineup)
     {
         var results = new List<string>
         {
-            result
+            lineup
         };
 
-        while (result.Count() > 1)
+        while (lineup.Count() > 1)
         {
-            result = RunTournamentForRounds(result, 1, true);
-            results.Add(result);
+            lineup = RunTournamentForRounds(lineup, 1, true);
+            results.Add(lineup);
         }
 
         return results;
+    }
+
+    public static Fighter GetFighter(char input)
+    {
+        return input switch
+        {
+            'R' => Fighter.Rock,
+            'P' => Fighter.Paper,
+            'S' => Fighter.Scissors,
+            'L' => Fighter.Lizard,
+            'Y' => Fighter.Spock,
+            'X' => Fighter.Unknown,
+            _ => throw new InvalidOperationException($"Unknown fighter {input}")
+        };
     }
 
 

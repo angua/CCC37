@@ -15,13 +15,15 @@
             };
         }
 
+
+
         public static Fighter[] GetInferiors(this Fighter fighter)
         {
             return fighter switch
             {
                 Fighter.Rock => new[] { Fighter.Rock, Fighter.Lizard, Fighter.Scissors },
                 Fighter.Paper => new[] { Fighter.Rock, Fighter.Spock, Fighter.Paper },
-                Fighter.Spock => new[] { Fighter.Rock, Fighter.Spock, Fighter.Scissors   },
+                Fighter.Spock => new[] { Fighter.Rock, Fighter.Spock, Fighter.Scissors },
                 Fighter.Scissors => new[] { Fighter.Paper, Fighter.Lizard, Fighter.Scissors },
                 Fighter.Lizard => new[] { Fighter.Spock, Fighter.Lizard, Fighter.Paper },
             };
@@ -84,6 +86,7 @@
                         'S' => 'R', // rock beats scissors
                         'Y' => 'Y', // Spock vaporizes rock
                         'L' => 'R', // rock crushes lizard 
+                        'X' => 'X', // unknown "wins" over all the others
                         _ => first
                     };
 
@@ -94,6 +97,7 @@
                         'S' => 'S', // scissors beats paper
                         'Y' => 'P', // paper disproves Spock
                         'L' => 'L', // lizard eats paper 
+                        'X' => 'X', // unknown "wins" over all the others
                         _ => first
                     };
 
@@ -104,17 +108,18 @@
                         'R' => 'R', // rock beats scissors
                         'Y' => 'Y', // Spock smashes scissors
                         'L' => 'S', // scissors decapitate lizards 
+                        'X' => 'X', // unknown "wins" over all the others
                         _ => first
                     };
 
                 case 'Y':
                     return second switch
                     {
-
                         'P' => 'P', // paper disproves Spock
                         'R' => 'Y', // Spock vaporizes rock
                         'S' => 'Y', // Spock smashes scissors
                         'L' => 'L', // lizard poisons Spock 
+                        'X' => 'X', // unknown "wins" over all the others
                         _ => first
                     };
 
@@ -125,11 +130,14 @@
                         'R' => 'R', // rock crushes lizard
                         'S' => 'S', // scissors decapitate lizards
                         'Y' => 'L', // lizard poisons Spock 
+                        'X' => 'X', // unknown "wins" over all the others
                         _ => first
                     };
-
+                case 'X':
+                    // unknown "wins" over all the others
+                    return 'X';
+            
             }
-
             throw new ArgumentOutOfRangeException("Invalid fighting style");
         }
 

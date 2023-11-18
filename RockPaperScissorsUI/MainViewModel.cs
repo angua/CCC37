@@ -140,7 +140,10 @@ namespace RockPaperScissorsUI
             }
             else
             {
-                _tournamentRounds.Add(CurrentVisualTournament.CurrentTournament.Lineup);
+                foreach (var round in CurrentVisualTournament.CurrentTournament.Rounds)
+                {
+                    _tournamentRounds.Add(round);
+                }
             }
 
             CreateVisuals(_tournamentRounds);
@@ -164,13 +167,13 @@ namespace RockPaperScissorsUI
                     var x = (0.5 + i) * fraction;
 
                     var unknown = false;
-                    if (currentRound.Length == maxLength && 
-                        CurrentVisualTournament.CurrentTournament.Lineup.Length == maxLength &&
-                        CurrentVisualTournament.CurrentTournament.Lineup[i] == 'X')
+
+                    var originalRound = CurrentVisualTournament.CurrentTournament.Rounds.FirstOrDefault(r => r.Length == currentRound.Length);
+
+                    if (originalRound != null && originalRound[i] == 'X')
                     {
                         unknown = true;
                     }
-
 
                     // fighter box
                     VisualTournament.Add(new VisualFighter()
