@@ -25,39 +25,84 @@ public static class TournamentHandler
 
             foreach (var input in tournaments)
             {
-                var line = input.Replace('R', ' ');
-                line = line.Replace('P', ' ');
-                line = line.Replace('S', ' ');
-                line = line.Replace('Y', ' ');
-                line = line.Replace('L', ' ');
-
-                var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                var rocks = int.Parse(parts[0]);
-                var papers = int.Parse(parts[1]);
-                var scissors = int.Parse(parts[2]);
-                var spocks = int.Parse(parts[3]);
-                var lizards = int.Parse(parts[4]);
-
-                var set = new FighterSet();
-                set[Fighter.Rock] = rocks;
-                set[Fighter.Paper] = papers;
-                set[Fighter.Scissors] = scissors;
-                set[Fighter.Lizard] = lizards;
-                set[Fighter.Spock] = spocks;
-
-                tournamentList.Add(new Tournament()
+                if (level == 5)
                 {
-                    FileNumber = inputFileNumber,
-                    TournamentNumber = ++inputCount,
-                    Set = set,
-                    FigherCount = rocks + papers + scissors + spocks + lizards
-                });
+                    // parse fighter set
+                    var set = ParseSet(input);
+                    tournamentList.Add(new Tournament()
+                    {
+                        FileNumber = inputFileNumber,
+                        TournamentNumber = ++inputCount,
+                        Set = set,
+                        FigherCount = set.Count,
+                        Level = level
+                    });
+                }
+                else
+                {
+                    // parse lineup
+                    var set = CreateSet(input);
+                    tournamentList.Add(new Tournament()
+                    {
+                        FileNumber = inputFileNumber,
+                        TournamentNumber = ++inputCount,
+                        Set = set,
+                        Lineup = input,
+                        FigherCount = input.Length,
+                        Level = level
+                    });
+
+                }
 
             }
 
         }
 
         return tournamentList;
+    }
+
+    /// <summary>
+    /// Create FighterSet from lineup
+    /// </summary>
+    /// <param name="lineup"></param>
+    /// <returns></returns>
+    private static FighterSet CreateSet(string lineup)
+    {
+        var set = new FighterSet();
+
+        set[Fighter.Rock] = lineup.Count(c => c == 'R');
+        set[Fighter.Paper] = lineup.Count(c => c == 'P');
+        set[Fighter.Scissors] = lineup.Count(c => c == 'S');
+        set[Fighter.Lizard] = lineup.Count(c => c == 'L');
+        set[Fighter.Spock] = lineup.Count(c => c == 'Y');
+        set[Fighter.Unknown] = lineup.Count(c => c == 'X');
+
+        return set;
+    }
+
+    private static FighterSet ParseSet(string? input)
+    {
+        var line = input.Replace('R', ' ');
+        line = line.Replace('P', ' ');
+        line = line.Replace('S', ' ');
+        line = line.Replace('Y', ' ');
+        line = line.Replace('L', ' ');
+
+        var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var rocks = int.Parse(parts[0]);
+        var papers = int.Parse(parts[1]);
+        var scissors = int.Parse(parts[2]);
+        var spocks = int.Parse(parts[3]);
+        var lizards = int.Parse(parts[4]);
+
+        var set = new FighterSet();
+        set[Fighter.Rock] = rocks;
+        set[Fighter.Paper] = papers;
+        set[Fighter.Scissors] = scissors;
+        set[Fighter.Lizard] = lizards;
+        set[Fighter.Spock] = spocks;
+
+        return set;
     }
 
     public static string RunTournamentForRounds(string tournament, int numRounds) => RunTournamentForRounds(tournament, numRounds, false);
@@ -90,6 +135,21 @@ public static class TournamentHandler
     }
 
 
+    public static string Solve(Tournament tournament)
+    {
+        if (tournament.Level == 5)
+        {
+            return GuessSolution(tournament);
+        }
+        return SolveLevel6(tournament);
+    }
+
+
+    /// <summary>
+    /// Level 5: Try arranging fighters for scissors to win
+    /// </summary>
+    /// <param name="tournament"></param>
+    /// <returns></returns>
     public static string GuessSolution(Tournament tournament)
     {
         var lineup = new Fighter[tournament.FigherCount];
@@ -178,17 +238,16 @@ public static class TournamentHandler
             }
 
         }
-        
+
         else
         {
             // try placing lizard or paper at the first position
-            
-             if (inputSet[Fighter.Paper] > 0)
+            if (inputSet[Fighter.Paper] > 0)
             {
                 lineup[half] = Fighter.Paper;
                 inputSet[Fighter.Paper]--;
             }
-            else if(inputSet[Fighter.Lizard] > 0)
+            else if (inputSet[Fighter.Lizard] > 0)
             {
                 lineup[half] = Fighter.Lizard;
                 inputSet[Fighter.Lizard]--;
@@ -239,6 +298,52 @@ public static class TournamentHandler
                 }
             }
         }
+    }
+
+    public static string SolveLevel6(Tournament tournament)
+    {
+        return FirstGuess(tournament);
+    }
+
+    private static string FirstGuess(Tournament tournament)
+    {
+        // pairs of the first round
+        var pairs = new List<string>();
+
+        for (int i = 0; i < tournament.Lineup.Length / 2; i++)
+        {
+            var first = tournament.Lineup[2 * i];
+            var second = tournament.Lineup[2 * i + 1];
+            pairs.Add(string.Join("", first, second));
+        }
+
+        var lineup = new List<string>();
+        foreach (var pair in pairs)
+        {
+            if (pair.Contains('X'))
+            {
+                // remove rocks and Spocks with paper
+                if (pair.Contains('R') || pair.Contains('Y'))
+                {
+                    lineup.Add(pair.Replace('X', 'P'));
+                }
+                else if (pair == "XX")
+                {
+                    lineup.Add("PP");
+                }
+                else
+                {
+                    lineup.Add(pair.Replace('X', 'S'));
+                }
+            }
+            else
+            {
+                lineup.Add(pair);
+            }
+
+        }
+
+        return string.Join("", lineup);
     }
 
     public static List<string> CreateRounds(string result)

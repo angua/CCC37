@@ -6,4 +6,6 @@ class VisualFighter
 
     public double PositionX { get; set; }
     public double PositionY { get; set; }
+
+    public bool IsUnknown { get; set; } = false;
 }

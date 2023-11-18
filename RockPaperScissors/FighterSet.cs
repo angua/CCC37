@@ -2,7 +2,7 @@
 
 public class FighterSet
 {
-    private int[] _fighters = new int[5];
+    private int[] _fighters = new int[6];
 
     public int this[Fighter fighter]
     {

@@ -37,7 +37,7 @@ public class Program
 
             using var outputWriter = new StreamWriter(outputfilename);
 
-            for (var i = 0; i <= lineups.Count; i++)
+            for (var i = 0; i < lineups.Count; i++)
             {
                 Console.WriteLine($"Input {i}");
 

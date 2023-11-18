@@ -17,6 +17,22 @@ namespace RockPaperScissorsUI
 
         private List<string> _tournamentRounds = new();
 
+        public int Level
+        {
+            get => GetValue<int>();
+            set
+            {
+                SetValue(value);
+                _tournaments.Clear();
+                _tournaments = TournamentHandler.ParseTournaments(value);
+
+                FileNumber = 1;
+                TournamentNumber = 1;
+
+            }
+        }
+
+
         public int FileNumber
         {
             get => GetValue<int>();
@@ -26,7 +42,7 @@ namespace RockPaperScissorsUI
                 {
                     value = 1;
                 }
-                if (value > 5) 
+                if (value > 5)
                 {
                     value = 5;
                 }
@@ -43,7 +59,7 @@ namespace RockPaperScissorsUI
             {
                 SetValue(value);
                 CurrentVisualTournament = new VisualTournament(_tournaments.FirstOrDefault(t => t.FileNumber == FileNumber && t.TournamentNumber == value));
-                DoShowSolution();
+                ShowTournament();
             }
         }
 
@@ -55,9 +71,9 @@ namespace RockPaperScissorsUI
 
         public ObservableCollection<object> VisualTournament { get; set; } = new();
 
-        public char Winner
+        public string Winner
         {
-            get => GetValue<char>();
+            get => GetValue<string>();
             set => SetValue(value);
         }
 
@@ -65,16 +81,13 @@ namespace RockPaperScissorsUI
 
         public MainViewModel()
         {
-            _tournaments = TournamentHandler.ParseTournaments(5);
-
-            FileNumber = 1;
-            TournamentNumber = 1;
-
-
+            Winner = string.Empty;
+            Level = 6;
 
             PreviousInput = new RelayCommand(CanPreviousInput, DoPreviousInput);
             NextInput = new RelayCommand(CanNextInput, DoNextInput);
-            ShowSolution = new RelayCommand(CanShowSolution, DoShowSolution);
+
+            Solve = new RelayCommand(CanSolve, DoSolve);
 
         }
         public RelayCommand PreviousInput { get; }
@@ -97,21 +110,40 @@ namespace RockPaperScissorsUI
             TournamentNumber++;
         }
 
-        public RelayCommand ShowSolution { get; }
-        public bool CanShowSolution()
+        public RelayCommand Solve { get; }
+        public bool CanSolve()
         {
             return true;
         }
-        public void DoShowSolution()
+        public void DoSolve()
         {
             _tournamentRounds.Clear();
-
-            var result = TournamentHandler.GuessSolution(CurrentVisualTournament.CurrentTournament);
-            _tournamentRounds = TournamentHandler.CreateRounds(result);
-            Winner = _tournamentRounds.Last().First();
+            var solution = TournamentHandler.Solve(CurrentVisualTournament.CurrentTournament);
+            _tournamentRounds = TournamentHandler.CreateRounds(solution);
+            Winner = _tournamentRounds.Last().First().ToString();
 
             CreateVisuals(_tournamentRounds);
+        }
 
+
+        public void ShowTournament()
+        {
+            _tournamentRounds.Clear();
+            Winner = string.Empty;
+
+            if (Level == 5)
+            {
+
+                var result = TournamentHandler.GuessSolution(CurrentVisualTournament.CurrentTournament);
+                _tournamentRounds = TournamentHandler.CreateRounds(result);
+                Winner = _tournamentRounds.Last().First().ToString();
+            }
+            else
+            {
+                _tournamentRounds.Add(CurrentVisualTournament.CurrentTournament.Lineup);
+            }
+
+            CreateVisuals(_tournamentRounds);
         }
 
 
@@ -124,24 +156,33 @@ namespace RockPaperScissorsUI
             {
                 var currentRound = tournamentRounds[round];
 
-                var fraction =  maxLength / currentRound.Length;
+                var fraction = maxLength / currentRound.Length;
 
                 for (int i = 0; i < currentRound.Length; i++)
                 {
                     var fighter = currentRound[i];
-
                     var x = (0.5 + i) * fraction;
+
+                    var unknown = false;
+                    if (currentRound.Length == maxLength && 
+                        CurrentVisualTournament.CurrentTournament.Lineup.Length == maxLength &&
+                        CurrentVisualTournament.CurrentTournament.Lineup[i] == 'X')
+                    {
+                        unknown = true;
+                    }
+
 
                     // fighter box
                     VisualTournament.Add(new VisualFighter()
                     {
                         FighterType = fighter,
                         PositionX = x,
-                        PositionY = round
+                        PositionY = round,
+                        IsUnknown = unknown
                     });
 
                     // connection line to box below
-                    if (currentRound.Length > 1) 
+                    if (currentRound.Length > 1)
                     {
                         // will be rounded down to int
                         var elementBelow = i / 2;
