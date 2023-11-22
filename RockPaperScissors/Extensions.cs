@@ -11,6 +11,8 @@
                 Fighter.Scissors => 'S',
                 Fighter.Lizard => 'L',
                 Fighter.Spock => 'Y',
+                Fighter.Available => 'X',
+                Fighter.Unknown => 'Z',
                 _ => throw new ArgumentOutOfRangeException(nameof(fighter))
             };
         }
@@ -86,7 +88,8 @@
                         'S' => 'R', // rock beats scissors
                         'Y' => 'Y', // Spock vaporizes rock
                         'L' => 'R', // rock crushes lizard 
-                        'X' => 'X', // unknown "wins" over all the others
+                        'X' => 'X', // available "wins" over all the others
+                        'Z' => 'Z', // unknown "wins" against all others except X
                         _ => first
                     };
 
@@ -97,7 +100,9 @@
                         'S' => 'S', // scissors beats paper
                         'Y' => 'P', // paper disproves Spock
                         'L' => 'L', // lizard eats paper 
-                        'X' => 'X', // unknown "wins" over all the others
+                        'X' => 'X', // available "wins" over all the others
+                        'Z' => 'Z', // unknown "wins" against all others except X
+
                         _ => first
                     };
 
@@ -108,7 +113,9 @@
                         'R' => 'R', // rock beats scissors
                         'Y' => 'Y', // Spock smashes scissors
                         'L' => 'S', // scissors decapitate lizards 
-                        'X' => 'X', // unknown "wins" over all the others
+                        'X' => 'X', // available "wins" over all the others
+                        'Z' => 'Z', // unknown "wins" against all others except X
+
                         _ => first
                     };
 
@@ -119,7 +126,9 @@
                         'R' => 'Y', // Spock vaporizes rock
                         'S' => 'Y', // Spock smashes scissors
                         'L' => 'L', // lizard poisons Spock 
-                        'X' => 'X', // unknown "wins" over all the others
+                        'X' => 'X', // available "wins" over all the others
+                        'Z' => 'Z', // unknown "wins" against all others except X
+
                         _ => first
                     };
 
@@ -130,11 +139,27 @@
                         'R' => 'R', // rock crushes lizard
                         'S' => 'S', // scissors decapitate lizards
                         'Y' => 'L', // lizard poisons Spock 
-                        'X' => 'X', // unknown "wins" over all the others
+                        'X' => 'X', // available "wins" over all the others
+                        'Z' => 'Z', // unknown "wins" against all others except X
+
                         _ => first
                     };
+
+                case 'Z':
+                    return second switch
+                    {
+                        // unknown "wins" against all others except X
+                        'P' => 'Z', 
+                        'R' => 'Z', 
+                        'S' => 'Z', 
+                        'Y' => 'Z', 
+                        'L' => 'Z', 
+                        'X' => 'X', 
+                        _ => first
+                    };
+
                 case 'X':
-                    // unknown "wins" over all the others
+                    // available "wins" over all the others
                     return 'X';
             
             }

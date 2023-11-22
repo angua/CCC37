@@ -22,6 +22,40 @@ public class Program
         Console.WriteLine("Done");
     }
 
+
+    public void CreateOutput(int level)
+    {
+        // parse
+        var tournaments = TournamentHandler.ParseTournaments(6);
+
+        for (var inputFileNumber = 1; inputFileNumber <= 5; inputFileNumber++)
+        {
+            var currentTournaments = tournaments.Where(t => t.FileNumber == inputFileNumber).ToList();
+            Console.WriteLine($"input file {inputFileNumber}");
+
+            var outputfilename = $"../../../../Files/level{level}_{inputFileNumber}.out";
+            using var outputWriter = new StreamWriter(outputfilename);
+
+            for (var inputNumber = 1; inputNumber <= currentTournaments.Count; inputNumber++)
+            {
+                var tournament = currentTournaments.First(t => t.TournamentNumber == inputNumber);
+                Console.WriteLine($"Input {inputNumber}");
+
+                var lineupString = TournamentHandler.Solve(tournament);
+
+                outputWriter.WriteLine(lineupString);
+                Console.WriteLine(lineupString);
+            }
+        }
+    }
+
+
+    private static void Level7()
+    {
+
+    }
+
+
     private static void Level6()
     {
         var tournaments = TournamentHandler.ParseTournaments(6);
@@ -78,7 +112,7 @@ public class Program
 
                 var tournament = currentTournaments.First(t => t.TournamentNumber == inputNumber);
 
-                var lineupString = TournamentHandler.GuessSolution(tournament);
+                var lineupString = TournamentHandler.SolveLevel5(tournament);
 
                 outputWriter.WriteLine(lineupString);
                 Console.WriteLine(lineupString);
@@ -501,6 +535,7 @@ public class Program
 
     private static void Level1()
     {
+
         for (var i = 1; i <= 5; i++)
         {
             var inputfilename = $"../../../level1_{i}.in";

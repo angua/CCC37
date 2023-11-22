@@ -25,10 +25,22 @@ public static class TournamentHandler
 
             foreach (var input in tournaments)
             {
-                if (level == 5)
+                if (level == 3 || level == 4)
+                {
+                    var set = Parse3TypesSet(input);
+                    tournamentList.Add(new Tournament()
+                    {
+                        FileNumber = inputFileNumber,
+                        TournamentNumber = ++inputCount,
+                        Set = set,
+                        FigherCount = set.Count,
+                        Level = level
+                    });
+                }
+                else if (level == 5)
                 {
                     // parse fighter set
-                    var set = ParseSet(input);
+                    var set = Parse5TypesSet(input);
                     tournamentList.Add(new Tournament()
                     {
                         FileNumber = inputFileNumber,
@@ -40,7 +52,7 @@ public static class TournamentHandler
                 }
                 else
                 {
-                    // Level 6
+                    // Level 1,2, 6, 7
                     // parse lineup
                     tournamentList.Add(new Tournament()
                     {
@@ -54,9 +66,7 @@ public static class TournamentHandler
                     });
 
                 }
-
             }
-
         }
 
         return tournamentList;
@@ -76,12 +86,33 @@ public static class TournamentHandler
         set[Fighter.Scissors] = lineup.Count(c => c == 'S');
         set[Fighter.Lizard] = lineup.Count(c => c == 'L');
         set[Fighter.Spock] = lineup.Count(c => c == 'Y');
-        set[Fighter.Unknown] = lineup.Count(c => c == 'X');
+        set[Fighter.Available] = lineup.Count(c => c == 'X');
+        set[Fighter.Unknown] = lineup.Count(c => c == 'Z');
 
         return set;
     }
 
-    private static FighterSet ParseSet(string? input)
+
+    private static FighterSet Parse3TypesSet(string? input)
+    {
+        var line = input.Replace('R', ' ');
+        line = line.Replace('P', ' ');
+        line = line.Replace('S', ' ');
+
+        var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var rocks = int.Parse(parts[0]);
+        var papers = int.Parse(parts[1]);
+        var scissors = int.Parse(parts[2]);
+
+        var set = new FighterSet();
+        set[Fighter.Rock] = rocks;
+        set[Fighter.Paper] = papers;
+        set[Fighter.Scissors] = scissors;
+
+        return set;
+    }
+
+    private static FighterSet Parse5TypesSet(string? input)
     {
         var line = input.Replace('R', ' ');
         line = line.Replace('P', ' ');
@@ -138,12 +169,228 @@ public static class TournamentHandler
 
     public static string Solve(Tournament tournament)
     {
-        if (tournament.Level == 5)
+        switch (tournament.Level)
         {
-            return GuessSolution(tournament);
-        }
-        return SolveLevel6(tournament);
+            case 1:
+                return SolveLevel1(tournament);
+
+            case 2:
+                return SolveLevel2(tournament);
+
+            case 3:
+                return SolveLevel3(tournament);
+            case 4:
+                return SolveLevel4(tournament);
+            case 5:
+                return SolveLevel5(tournament);
+
+            case 6:
+                return SolveLevel6(tournament);
+
+            case 7:
+                return SolveLevel7(tournament);
+        };
+
+        throw new InvalidOperationException("Cannot solve for tournament");
+
     }
+
+
+    private static string SolveLevel1(Tournament tournament)
+    {
+        return tournament.Lineup.GetOutCome().ToString();
+    }
+
+    private static string SolveLevel2(Tournament tournament)
+    {
+        return RunTournamentForRounds(tournament.Lineup, 2);
+    }
+
+    private static string SolveLevel3(Tournament tournament)
+    {
+        List<string> pairs = new List<string>();
+
+        var scissors = tournament.Set[Fighter.Scissors];
+        var papers = tournament.Set[Fighter.Paper];
+        var rocks = tournament.Set[Fighter.Rock];
+
+
+        // Avoid pairing a single scissor with a rock
+        if (scissors == 1 && papers > 0)
+        {
+            pairs.Add("SP");
+            scissors--;
+            papers--;
+        }
+
+        // Pair Rocks with Paper
+        var rpPairs = Math.Min(rocks, papers);
+        pairs.AddRange(Enumerable.Range(1, rpPairs).Select(_ => "RP"));
+        rocks -= rpPairs;
+        papers -= rpPairs;
+
+        // Pair remaining Papers with Scissors
+        var spPairs = Math.Min(papers, scissors);
+        pairs.AddRange(Enumerable.Range(1, spPairs).Select(_ => "SP"));
+        scissors -= spPairs;
+        papers -= spPairs;
+
+        var rrPairs = Math.DivRem(rocks, 2, out rocks);
+        pairs.AddRange(Enumerable.Range(1, rrPairs).Select(_ => "RR"));
+
+        if (rocks > 1) throw new InvalidOperationException("Too many rocks error");
+
+        if (rocks == 1 && scissors > 0)
+        {
+            pairs.Add("RS");
+            rocks--;
+            scissors--;
+        }
+
+        if (rocks > 0) throw new InvalidOperationException("Too many rocks error");
+
+        // Match remaining Papers with themselves
+        var ppPairs = Math.DivRem(papers, 2, out papers);
+        pairs.AddRange(Enumerable.Range(1, ppPairs).Select(_ => "PP"));
+
+        // Match remaining scissors with themselves
+        var ssPairs = Math.DivRem(scissors, 2, out scissors);
+        pairs.AddRange(Enumerable.Range(1, ssPairs).Select(_ => "SS"));
+
+        if (scissors > 0 || papers > 0 || rocks > 0) throw new InvalidOperationException("Logic error");
+
+        pairs.Sort();
+
+        for (int i = 0; i < pairs.Count; i++)
+        {
+            if (i == 0 || pairs[i - 1] == "RP")
+            {
+                if (TryFindPairToTheRight("RS", i, out var index))
+                {
+                    SwapPositions(i, index);
+                    continue;
+                }
+
+                if (TryFindPairToTheRight("RR", i, out index))
+                {
+                    SwapPositions(i, index);
+                    continue;
+                }
+            }
+        }
+
+        return string.Join("", pairs);
+
+        bool TryFindPairToTheRight(string pair, int startIndex, out int index)
+        {
+            index = pairs.IndexOf(pair, startIndex);
+            return index != -1;
+        }
+
+        void SwapPositions(int index1, int index2)
+        {
+            var temp = pairs[index1];
+            pairs[index1] = pairs[index2];
+            pairs[index2] = temp;
+        }
+    }
+
+    private static string SolveLevel4(Tournament tournament)
+    {
+        var pairs = new Dictionary<string, int>();
+
+        var scissors = tournament.Set[Fighter.Scissors];
+        var papers = tournament.Set[Fighter.Paper];
+        var rocks = tournament.Set[Fighter.Rock];
+
+        pairs["RR"] = 0;
+        pairs["RS"] = 0;
+        pairs["RP"] = 0;
+        pairs["SP"] = 0;
+        pairs["PP"] = 0;
+        pairs["SS"] = 0;
+
+        // Avoid pairing a single scissor with a rock
+        if (scissors == 1 && papers > 0)
+        {
+            pairs["SP"]++;
+            scissors--;
+            papers--;
+        }
+
+        // Pair Rocks with Paper
+        var rpPairs = Math.Min(rocks, papers);
+        pairs["RP"] += rpPairs;
+        rocks -= rpPairs;
+        papers -= rpPairs;
+
+        // Pair remaining Papers with Scissors
+        var spPairs = Math.Min(papers, scissors);
+        pairs["SP"] += spPairs;
+        scissors -= spPairs;
+        papers -= spPairs;
+
+        var rrPairs = Math.DivRem(rocks, 2, out rocks);
+        pairs["RR"] += rrPairs;
+
+        if (rocks > 1) throw new InvalidOperationException("Too many rocks error");
+
+        if (rocks == 1 && scissors > 0)
+        {
+            pairs["RS"]++;
+            rocks--;
+            scissors--;
+        }
+
+        if (rocks > 0) throw new InvalidOperationException("Too many rocks error");
+
+        // Match remaining Papers with themselves
+        var ppPairs = Math.DivRem(papers, 2, out papers);
+        pairs["PP"] += ppPairs;
+
+        // Match remaining scissors with themselves
+        var ssPairs = Math.DivRem(scissors, 2, out scissors);
+        pairs["SS"] += ssPairs;
+
+        if (scissors > 0 || papers > 0 || rocks > 0) throw new InvalidOperationException("Logic error");
+
+        var pairCount = pairs.Sum(p => p.Value);
+
+        var lineupList = new List<string>();
+
+        lineupList.AddRange(Enumerable.Range(1, pairs["RS"]).Select(_ => "RS"));
+        lineupList.AddRange(Enumerable.Range(1, pairs["RR"]).Select(_ => "RR"));
+        lineupList.AddRange(Enumerable.Range(1, pairs["RP"]).Select(_ => "RP"));
+        lineupList.AddRange(Enumerable.Range(1, pairs["PP"]).Select(_ => "PP"));
+        lineupList.AddRange(Enumerable.Range(1, pairs["SP"]).Select(_ => "SP"));
+        lineupList.AddRange(Enumerable.Range(1, pairs["SS"]).Select(_ => "SS"));
+
+        var position = 0;
+        var half = pairCount / 2;
+
+        while (half > 0)
+        {
+            var rpIndex = lineupList.FindIndex(position, s => s == "RP");
+
+            if (rpIndex != -1 && lineupList[position] != "RP")
+            {
+                SwapPositions(rpIndex, position);
+            }
+
+            position += half;
+            half /= 2;
+        }
+
+        return string.Join("", lineupList);
+        
+        void SwapPositions(int index1, int index2)
+        {
+            var temp = lineupList[index1];
+            lineupList[index1] = lineupList[index2];
+            lineupList[index2] = temp;
+        }
+    }
+    
 
 
     /// <summary>
@@ -151,7 +398,7 @@ public static class TournamentHandler
     /// </summary>
     /// <param name="tournament"></param>
     /// <returns></returns>
-    public static string GuessSolution(Tournament tournament)
+    public static string SolveLevel5(Tournament tournament)
     {
         var lineup = new Fighter[tournament.FigherCount];
         var inputSet = tournament.Set.Clone();
@@ -179,7 +426,6 @@ public static class TournamentHandler
         return new string(lineup.Select(f => f.ToChar()).ToArray());
 
     }
-
     private static void FillSecondHalf(Fighter[] lineup, FighterSet inputSet, int half)
     {
         // Paper Rocks strategy
@@ -316,15 +562,13 @@ public static class TournamentHandler
         TryGetCombination(tournament, winner, pos, currentRound, out List<StartFighter> StartFighters);
 
         var result = tournament.Lineup.ToArray();
-        foreach (var  fighter in StartFighters) 
+        foreach (var fighter in StartFighters)
         {
             result[fighter.Position] = fighter.StartFighterType.ToChar();
         }
 
         return string.Join("", result);
     }
-
-
     private static bool TryGetCombination(Tournament tournament, Fighter winner, int pos, int currentRound, out List<StartFighter> startFighters)
     {
         if (currentRound == 0)
@@ -360,7 +604,7 @@ public static class TournamentHandler
 
 
         // both ancestors unknown
-        if (leftAncestor == Fighter.Unknown && rightAncestor == Fighter.Unknown)
+        if (leftAncestor == Fighter.Available && rightAncestor == Fighter.Available)
         {
             foreach (var inferior in inferiors)
             {
@@ -386,7 +630,7 @@ public static class TournamentHandler
         }
 
         // only left unknown
-        else if (leftAncestor == Fighter.Unknown)
+        else if (leftAncestor == Fighter.Available)
         {
             // go down left branch
             if (rightAncestor == winner)
@@ -450,46 +694,21 @@ public static class TournamentHandler
 
     }
 
-    private static string FirstGuess(Tournament tournament)
+
+    private static string SolveLevel7(Tournament tournament)
     {
-        // pairs of the first round
-        var pairs = new List<string>();
 
-        for (int i = 0; i < tournament.Lineup.Length / 2; i++)
+        foreach (var fighter in tournament.Lineup)
         {
-            var first = tournament.Lineup[2 * i];
-            var second = tournament.Lineup[2 * i + 1];
-            pairs.Add(string.Join("", first, second));
-        }
-
-        var lineup = new List<string>();
-        foreach (var pair in pairs)
-        {
-            if (pair.Contains('X'))
-            {
-                // remove rocks and Spocks with paper
-                if (pair.Contains('R') || pair.Contains('Y'))
-                {
-                    lineup.Add(pair.Replace('X', 'P'));
-                }
-                else if (pair == "XX")
-                {
-                    lineup.Add("PP");
-                }
-                else
-                {
-                    lineup.Add(pair.Replace('X', 'S'));
-                }
-            }
-            else
-            {
-                lineup.Add(pair);
-            }
 
         }
 
-        return string.Join("", lineup);
+
+
+
+        return tournament.Lineup;
     }
+
 
     public static List<string> CreateRounds(string lineup)
     {
@@ -516,7 +735,7 @@ public static class TournamentHandler
             'S' => Fighter.Scissors,
             'L' => Fighter.Lizard,
             'Y' => Fighter.Spock,
-            'X' => Fighter.Unknown,
+            'X' => Fighter.Available,
             _ => throw new InvalidOperationException($"Unknown fighter {input}")
         };
     }

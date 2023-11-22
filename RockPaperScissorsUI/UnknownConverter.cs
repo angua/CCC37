@@ -8,9 +8,17 @@ class UnknownConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if ((bool) value == true)
+        if (value is UnknownOrAvailable unknownOrAvailable)
         {
-            return "#fdff5c";
+
+            return unknownOrAvailable switch
+            {
+
+                UnknownOrAvailable.Available => "#fdff5c",
+                UnknownOrAvailable.Unknown => "#eba6ff",
+                UnknownOrAvailable.None => "#FFFFFF",
+                _ => "#FFFFFF"
+            };
         }
         return "#FFFFFF";
     }
