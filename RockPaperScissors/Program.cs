@@ -12,18 +12,13 @@ public class Program
 
     public static void Main(string[] args)
     {
-        //Level1();
-        //Level2();
-        //Level3();
-        //Level4();
-        //Level5();
-        Level6();
+        CreateOutput(7);
 
         Console.WriteLine("Done");
     }
 
 
-    public void CreateOutput(int level)
+    public static void CreateOutput(int level)
     {
         // parse
         var tournaments = TournamentHandler.ParseTournaments(6);
@@ -45,10 +40,64 @@ public class Program
 
                 outputWriter.WriteLine(lineupString);
                 Console.WriteLine(lineupString);
+
+                TestOutput(lineupString, tournament);
             }
         }
     }
 
+    private static void TestOutput(string lineupString, Tournament tournament)
+    {
+        if (tournament.Level == 3)
+        {
+            var tournamentResult = TournamentHandler.RunTournamentForRounds(lineupString, 2);
+
+            if (tournamentResult.Contains('R')) throw new InvalidOperationException("No rocks allowed here");
+            if (!tournamentResult.Contains('S')) throw new InvalidOperationException("No scissors left");
+        }
+        else if (tournament.Level == 4)
+        {
+            var tournamentResult = TournamentHandler.RunTournamentForRounds(lineupString, (int)Math.Log2(lineupString.Length));
+
+            if (tournamentResult.Contains('R')) throw new InvalidOperationException("No rocks allowed here");
+            if (!tournamentResult.Contains('S')) throw new InvalidOperationException("No scissors left");
+        }
+        else if (tournament.Level == 5)
+        {
+            // (in)sanity check
+            // check if scissors really win
+            var tournamentResult = TournamentHandler.RunTournamentForRounds(lineupString, (int)Math.Log2(tournament.FigherCount), true);
+            if (!tournamentResult.Contains('S')) throw new InvalidOperationException("No scissors left");
+
+            if (lineupString.Count(c => c == 'S') != tournament.Set[Fighter.Scissors])
+            {
+                throw new InvalidOperationException("Incorrect number of scissors");
+            }
+            if (lineupString.Count(c => c == 'R') != tournament.Set[Fighter.Rock])
+            {
+                throw new InvalidOperationException("Incorrect number of rocks");
+            }
+            if (lineupString.Count(c => c == 'P') != tournament.Set[Fighter.Paper])
+            {
+                throw new InvalidOperationException("Incorrect number of papers");
+            }
+            if (lineupString.Count(c => c == 'L') != tournament.Set[Fighter.Lizard])
+            {
+                throw new InvalidOperationException("Incorrect number of lizards");
+            }
+            if (lineupString.Count(c => c == 'Y') != tournament.Set[Fighter.Spock])
+            {
+                throw new InvalidOperationException("Incorrect number of Spocks");
+            }
+        }
+        else if (tournament.Level == 6)
+        {
+            // (in)sanity check
+            // check if scissors really win
+            var tournamentResult = TournamentHandler.RunTournamentForRounds(lineupString, (int)Math.Log2(tournament.FigherCount), true);
+            if (!tournamentResult.Contains('S')) throw new InvalidOperationException("No scissors left");
+        }
+    }
 
     private static void Level7()
     {

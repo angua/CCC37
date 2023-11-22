@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Reflection;
+﻿using System.Numerics;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace RockPaperScissors;
 
@@ -25,9 +20,9 @@ public static class TournamentHandler
 
             foreach (var input in tournaments)
             {
-                if (level == 3 || level == 4)
+                if (level == 3 || level == 4 || level == 5)
                 {
-                    var set = Parse3TypesSet(input);
+                    var set = ParseSet(input);
                     tournamentList.Add(new Tournament()
                     {
                         FileNumber = inputFileNumber,
@@ -37,19 +32,7 @@ public static class TournamentHandler
                         Level = level
                     });
                 }
-                else if (level == 5)
-                {
-                    // parse fighter set
-                    var set = Parse5TypesSet(input);
-                    tournamentList.Add(new Tournament()
-                    {
-                        FileNumber = inputFileNumber,
-                        TournamentNumber = ++inputCount,
-                        Set = set,
-                        FigherCount = set.Count,
-                        Level = level
-                    });
-                }
+                
                 else
                 {
                     // Level 1,2, 6, 7
@@ -112,7 +95,7 @@ public static class TournamentHandler
         return set;
     }
 
-    private static FighterSet Parse5TypesSet(string? input)
+    private static FighterSet ParseSet(string? input)
     {
         var line = input.Replace('R', ' ');
         line = line.Replace('P', ' ');
@@ -124,15 +107,19 @@ public static class TournamentHandler
         var rocks = int.Parse(parts[0]);
         var papers = int.Parse(parts[1]);
         var scissors = int.Parse(parts[2]);
-        var spocks = int.Parse(parts[3]);
-        var lizards = int.Parse(parts[4]);
 
         var set = new FighterSet();
         set[Fighter.Rock] = rocks;
         set[Fighter.Paper] = papers;
         set[Fighter.Scissors] = scissors;
-        set[Fighter.Lizard] = lizards;
-        set[Fighter.Spock] = spocks;
+
+        if (parts.Count() == 5)
+        {
+            var spocks = int.Parse(parts[3]);
+            var lizards = int.Parse(parts[4]);
+            set[Fighter.Lizard] = lizards;
+            set[Fighter.Spock] = spocks;
+        }
 
         return set;
     }
@@ -382,7 +369,7 @@ public static class TournamentHandler
         }
 
         return string.Join("", lineupList);
-        
+
         void SwapPositions(int index1, int index2)
         {
             var temp = lineupList[index1];
@@ -390,7 +377,7 @@ public static class TournamentHandler
             lineupList[index2] = temp;
         }
     }
-    
+
 
 
     /// <summary>
