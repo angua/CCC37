@@ -26,7 +26,7 @@
         <DataTemplate x:Key="FighterTemplate">
             <Border Height="{StaticResource FighterHeight}" Width="{StaticResource FighterWidth}" BorderThickness="2" 
                     BorderBrush="{Binding FighterType, Converter={StaticResource FighterColorConverter}}" Background="{Binding IsUnknownOrAvailable, Converter={StaticResource UnknownConverter}}">
-                <TextBlock Text="{Binding FighterType}" HorizontalAlignment="Center" VerticalAlignment="Center" 
+                <TextBlock Text="{Binding FighterType}" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" 
                            Foreground="{Binding FighterType, Converter={StaticResource FighterColorConverter}}" />
             </Border>
         </DataTemplate>

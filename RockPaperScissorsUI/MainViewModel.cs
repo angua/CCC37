@@ -11,7 +11,7 @@ class MainViewModel : ViewModelBase
     private List<Tournament> _tournaments = new();
     private int _maxTournamentNumber;
 
-    private List<string> _tournamentRounds = new();
+    private List<List<string>> _tournamentRounds = new();
 
 
     public List<int> PossibleLevels { get; private set; } = Enumerable.Range(1, 7).ToList();
@@ -133,6 +133,13 @@ class MainViewModel : ViewModelBase
             _tournamentRounds = TournamentHandler.CreateRounds(lineup);
             Winner = _tournamentRounds.Last().First().ToString();
         }
+        else if (Level == 7)
+        {
+            foreach (var round in CurrentVisualTournament.CurrentTournament.PossibleRounds)
+            {
+                _tournamentRounds.Add(round.Select(f => string.Join("", f)).ToList());
+            }
+        }
         else
         {
             foreach (var round in CurrentVisualTournament.CurrentTournament.Rounds)
@@ -145,33 +152,33 @@ class MainViewModel : ViewModelBase
     }
 
 
-    private void CreateVisuals(List<string> tournamentRounds)
+    private void CreateVisuals(List<List<string>> tournamentRounds)
     {
         VisualTournament.Clear();
-        var maxLength = tournamentRounds.Max(t => t.Length);
+        var maxLength = tournamentRounds.Max(t => t.Count);
 
         for (int round = 0; round < tournamentRounds.Count; round++)
         {
             var currentRound = tournamentRounds[round];
 
-            var fraction = maxLength / currentRound.Length;
+            var fraction = maxLength / currentRound.Count;
 
-            for (int i = 0; i < currentRound.Length; i++)
+            for (int i = 0; i < currentRound.Count; i++)
             {
                 var fighter = currentRound[i];
                 var x = (0.5 + i) * fraction;
 
                 var unknownOrAvailable = UnknownOrAvailable.None;
 
-                var originalRound = CurrentVisualTournament.CurrentTournament.Rounds.FirstOrDefault(r => r.Length == currentRound.Length);
+                var originalRound = CurrentVisualTournament.CurrentTournament.Rounds.FirstOrDefault(r => r.Count == currentRound.Count);
 
                 if (originalRound != null)
                 {
-                    if (originalRound[i] == 'X')
+                    if (originalRound[i] == "X")
                     {
                         unknownOrAvailable = UnknownOrAvailable.Available;
                     }
-                    if (originalRound[i] == 'Z')
+                    if (originalRound[i] == "Z")
                     {
                         unknownOrAvailable = UnknownOrAvailable.Unknown;
                     }
@@ -187,7 +194,7 @@ class MainViewModel : ViewModelBase
                 });
 
                 // connection line to box below
-                if (currentRound.Length > 1)
+                if (currentRound.Count > 1)
                 {
                     // will be rounded down to int
                     var elementBelow = i / 2;

@@ -10,13 +10,13 @@ class FighterColorConverter : IValueConverter
     {
         return value switch
         {
-            'R' => "#494d53",
-            'P' => "#00f3f6",
-            'S' => "#0066ff",
-            'Y' => "#ff6000",
-            'L' => "#1adf00",
-            'X' => "#fcd500",
-            'Z' => "#ab58ff",
+            "R" => "#494d53",
+            "P" => "#00f3f6",
+            "S" => "#0066ff",
+            "Y" => "#ff6000",
+            "L" => "#1adf00",
+            "X" => "#fcd500",
+            "Z" => "#ab58ff",
             _ => "#000000"
         };
     }

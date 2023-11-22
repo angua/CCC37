@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 namespace RockPaperScissors;
@@ -20,35 +21,37 @@ public static class TournamentHandler
 
             foreach (var input in tournaments)
             {
+                var tournament = new Tournament()
+                {
+                    FileNumber = inputFileNumber,
+                    TournamentNumber = ++inputCount,
+                    Level = level
+                };
+
+
                 if (level == 3 || level == 4 || level == 5)
                 {
-                    var set = ParseSet(input);
-                    tournamentList.Add(new Tournament()
-                    {
-                        FileNumber = inputFileNumber,
-                        TournamentNumber = ++inputCount,
-                        Set = set,
-                        FigherCount = set.Count,
-                        Level = level
-                    });
+                    tournament.Set = ParseSet(input);
+                    tournament.FigherCount = tournament.Set.Count;
                 }
-                
+
                 else
                 {
-                    // Level 1,2, 6, 7
+                    // Level 1, 2, 6, 7
                     // parse lineup
-                    tournamentList.Add(new Tournament()
-                    {
-                        FileNumber = inputFileNumber,
-                        TournamentNumber = ++inputCount,
-                        Set = CreateSet(input),
-                        Lineup = input,
-                        Rounds = CreateRounds(input),
-                        FigherCount = input.Length,
-                        Level = level
-                    });
-
+                    tournament.Set = CreateSet(input);
+                    tournament.Lineup = input;
+                    tournament.Rounds = CreateRounds(input);
+                    tournament.FigherCount = input.Length;
                 }
+
+                if (level == 7)
+                {
+                    tournament.PossibleRounds = CreatePossibleRounds(input);
+                }
+
+                tournamentList.Add(tournament);
+
             }
         }
 
@@ -71,26 +74,6 @@ public static class TournamentHandler
         set[Fighter.Spock] = lineup.Count(c => c == 'Y');
         set[Fighter.Available] = lineup.Count(c => c == 'X');
         set[Fighter.Unknown] = lineup.Count(c => c == 'Z');
-
-        return set;
-    }
-
-
-    private static FighterSet Parse3TypesSet(string? input)
-    {
-        var line = input.Replace('R', ' ');
-        line = line.Replace('P', ' ');
-        line = line.Replace('S', ' ');
-
-        var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var rocks = int.Parse(parts[0]);
-        var papers = int.Parse(parts[1]);
-        var scissors = int.Parse(parts[2]);
-
-        var set = new FighterSet();
-        set[Fighter.Rock] = rocks;
-        set[Fighter.Paper] = papers;
-        set[Fighter.Scissors] = scissors;
 
         return set;
     }
@@ -124,9 +107,7 @@ public static class TournamentHandler
         return set;
     }
 
-    public static string RunTournamentForRounds(string tournament, int numRounds) => RunTournamentForRounds(tournament, numRounds, false);
-
-    public static string RunTournamentForRounds(string tournament, int numRounds, bool use5Styles)
+    public static string RunTournamentForRounds(string tournament, int numRounds)
     {
         var fighters = tournament;
 
@@ -137,14 +118,7 @@ public static class TournamentHandler
 
             for (int f = 0; f < roundFighters.Length; f += 2)
             {
-                if (!use5Styles)
-                {
-                    roundResult.Append(Extensions.GetOutCome(roundFighters[f], roundFighters[f + 1]));
-                }
-                else
-                {
-                    roundResult.Append(Extensions.Get5StylesOutCome(roundFighters[f], roundFighters[f + 1]));
-                }
+                roundResult.Append(Extensions.GetOutcome(roundFighters[f], roundFighters[f + 1]));
             }
 
             fighters = roundResult.ToString();
@@ -160,20 +134,16 @@ public static class TournamentHandler
         {
             case 1:
                 return SolveLevel1(tournament);
-
             case 2:
                 return SolveLevel2(tournament);
-
             case 3:
                 return SolveLevel3(tournament);
             case 4:
                 return SolveLevel4(tournament);
             case 5:
                 return SolveLevel5(tournament);
-
             case 6:
                 return SolveLevel6(tournament);
-
             case 7:
                 return SolveLevel7(tournament);
         };
@@ -185,7 +155,7 @@ public static class TournamentHandler
 
     private static string SolveLevel1(Tournament tournament)
     {
-        return tournament.Lineup.GetOutCome().ToString();
+        return tournament.Lineup.GetOutcome().ToString();
     }
 
     private static string SolveLevel2(Tournament tournament)
@@ -378,8 +348,6 @@ public static class TournamentHandler
         }
     }
 
-
-
     /// <summary>
     /// Level 5: Try arranging fighters for scissors to win
     /// </summary>
@@ -534,7 +502,6 @@ public static class TournamentHandler
         }
     }
 
-
     public static string SolveLevel6(Tournament tournament)
     {
         // Start with placing Scissors at the winning round and work back up through the rounds trying differnt combinations
@@ -572,7 +539,6 @@ public static class TournamentHandler
             };
             return true;
         }
-
 
         var possibleAncestorCombinations = new List<(Fighter, Fighter)>();
 
@@ -684,45 +650,112 @@ public static class TournamentHandler
 
     private static string SolveLevel7(Tournament tournament)
     {
-
-        foreach (var fighter in tournament.Lineup)
-        {
-
-        }
-
-
-
+        // CreatePossibleRounds(tournament);
 
         return tournament.Lineup;
     }
 
-
-    public static List<string> CreateRounds(string lineup)
+    private static List<List<HashSet<char>>> CreatePossibleRounds(string lineup)
     {
-        var results = new List<string>
+        var possibleFighters = new List<HashSet<char>>();
+
+        // allow multiple possible fighters for each position
+        foreach (var fighter in lineup)
+        {
+            if (fighter == 'Z')
+            {
+                possibleFighters.Add(new HashSet<char>()
+                {
+                    'R','P','S','Y','L'
+                });
+            }
+            else
+            {
+                possibleFighters.Add(new HashSet<char>()
+                {
+                    fighter
+                });
+            }
+
+        }
+        return CreateRounds(possibleFighters);
+    }
+
+    private static List<List<HashSet<char>>> CreateRounds(List<HashSet<char>> lineup)
+    {
+        var rounds = new List<List<HashSet<char>>>()
         {
             lineup
         };
 
         while (lineup.Count() > 1)
         {
-            lineup = RunTournamentForRounds(lineup, 1, true);
-            results.Add(lineup);
+
+            lineup = RunTournamentForRounds(lineup, 1);
+            rounds.Add(lineup);
+        }
+
+        return rounds;
+
+    }
+
+
+    // allow multiple possible fighters for each position
+    private static List<HashSet<char>> RunTournamentForRounds(List<HashSet<char>> lineup, int numRounds)
+    {
+        var result = new List<HashSet<char>>();
+        for (int round = 0; round < numRounds; round++)
+        {
+            for (int position = 0; position < lineup.Count; position += 2)
+            {
+                var possibleFighters = new HashSet<char>();
+
+                var fighterPos1 = lineup[position];
+                var fighterPos2 = lineup[position + 1];
+
+                foreach (var fighter1 in fighterPos1)
+                {
+                    foreach (var fighter2 in fighterPos2)
+                    {
+                        var pair = string.Join("", fighter1, fighter2);
+                        possibleFighters.Add(Extensions.GetOutcome(fighter1, fighter2));
+                    }
+                }
+                result.Add(possibleFighters);
+            }
+
+        }
+
+        return result;
+    }
+
+
+    public static List<List<string>> CreateRounds(string lineup)
+    {
+        var results = new List<List<string>>
+        {
+            lineup.Select(f => f.ToString()).ToList()
+        };
+
+        while (lineup.Count() > 1)
+        {
+            lineup = RunTournamentForRounds(lineup, 1);
+            results.Add(lineup.Select(f => f.ToString()).ToList());
         }
 
         return results;
     }
 
-    public static Fighter GetFighter(char input)
+    public static Fighter GetFighter(string input)
     {
         return input switch
         {
-            'R' => Fighter.Rock,
-            'P' => Fighter.Paper,
-            'S' => Fighter.Scissors,
-            'L' => Fighter.Lizard,
-            'Y' => Fighter.Spock,
-            'X' => Fighter.Available,
+            "R" => Fighter.Rock,
+            "P" => Fighter.Paper,
+            "S" => Fighter.Scissors,
+            "L" => Fighter.Lizard,
+            "Y" => Fighter.Spock,
+            "X" => Fighter.Available,
             _ => throw new InvalidOperationException($"Unknown fighter {input}")
         };
     }

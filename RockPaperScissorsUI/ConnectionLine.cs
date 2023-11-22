@@ -2,7 +2,7 @@
 
 class ConnectionLine
 {
-    public char FighterType { get; set; }
+    public string FighterType { get; set; }
 
     public double StartPositionX { get; set; }
     public double StartPositionY { get; set; }
