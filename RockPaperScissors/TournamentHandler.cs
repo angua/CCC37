@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using System.Xml.Linq;
 
 namespace RockPaperScissors;
 
@@ -650,12 +651,238 @@ public static class TournamentHandler
 
     private static string SolveLevel7(Tournament tournament)
     {
-        // CreatePossibleRounds(tournament);
+        // Start with placing Scissors at the winning round and work back up through the rounds trying differnt combinations
 
-        return tournament.Lineup;
+        // last round producing the winner
+        var currentRound = tournament.Rounds.Count - 1;
+        // lineup position of the winner
+        var pos = 0;
+
+        var winnerSet = new HashSet<Fighter>() { Fighter.Scissors };
+
+        TryGetCombinationWithUnknown(tournament, winnerSet, pos, currentRound, out List<StartFighter> StartFighters);
+
+        var result = tournament.Lineup.ToArray();
+        foreach (var fighter in StartFighters)
+        {
+            result[fighter.Position] = fighter.StartFighterType.ToChar();
+        }
+
+        return string.Join("", result);
     }
 
-    private static List<List<HashSet<char>>> CreatePossibleRounds(string lineup)
+    private static bool TryGetCombinationWithUnknown(Tournament tournament, HashSet<Fighter> winners, int pos, int currentRound, out List<StartFighter> startFighters)
+    {
+        if (currentRound == 0)
+        {
+            // we have reached the top row
+            // just position one of the possible winners here
+            startFighters = new List<StartFighter>
+            {
+                new StartFighter()
+                {
+                    Position = pos,
+                    StartFighterType = winners.First()
+                }
+            };
+            return true;
+        }
+
+        startFighters = new List<StartFighter>();
+
+        // get the "ancestors" of the current fighters
+        var ancestorRound = currentRound - 1;
+
+        var leftancestorPos = pos * 2;
+        var leftAncestors = tournament.PossibleRounds[ancestorRound][leftancestorPos].Select(c => GetFighter(c.ToString()));
+
+        var rightancestorPos = pos * 2 + 1;
+        var rightAncestors = tournament.PossibleRounds[ancestorRound][rightancestorPos].Select(c => GetFighter(c.ToString()));
+
+
+        // both ancestors unknown
+        if (leftAncestors.Contains(Fighter.Available) && rightAncestors.Contains(Fighter.Available))
+        {
+            // go through all possible variations for the winner side (one winner, 2 of the winners, all 3 winners)
+            var winnerVariations = GetVariations(winners);
+            foreach (var variation in winnerVariations)
+            {
+                // one side needs to be the winner and the other someone the winner can crush
+                var opponents = GetPossibleOpponents(winners, variation);
+
+                // try putting winner to the left and inferiors to the right
+                if (TryGetCombinationWithUnknown(tournament, variation, leftancestorPos, ancestorRound, out var leftstartFighters))
+                {
+                    if (TryGetCombinationWithUnknown(tournament, opponents, rightancestorPos, ancestorRound, out var rightstartFighters))
+                    {
+                        startFighters.AddRange(leftstartFighters);
+                        startFighters.AddRange(rightstartFighters);
+                        return true;
+                    }
+                }
+
+                // try putting inferiors to the left and winner to the right
+                if (TryGetCombinationWithUnknown(tournament, opponents, leftancestorPos, ancestorRound, out leftstartFighters))
+                {
+                    if (TryGetCombinationWithUnknown(tournament, variation, rightancestorPos, ancestorRound, out var rightstartFighters))
+                    {
+                        startFighters.AddRange(leftstartFighters);
+                        startFighters.AddRange(rightstartFighters);
+                        return true;
+                    }
+                }
+
+            }
+            return false;
+        }
+
+        // only left unknown
+        else if (leftAncestors.Contains(Fighter.Available))
+        {
+            // try reducing the set from the known side with each possible fighter type so only allowed winners remain
+            HashSet<Fighter> possibleLeft = GetPossibleOpponents(winners, rightAncestors);
+
+            if (possibleLeft.Count > 0)
+            {
+                if (TryGetCombinationWithUnknown(tournament, possibleLeft, leftancestorPos, ancestorRound, out var leftstartFighters))
+                {
+                    startFighters.AddRange(leftstartFighters);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // only right unknown
+        else
+        {
+            // try reducing the set from the known side with each possible fighter type so only allowed winners remain
+            var possibleRight = GetPossibleOpponents(winners, leftAncestors);
+
+            if (possibleRight.Count > 0)
+            {
+                if (TryGetCombinationWithUnknown(tournament, possibleRight, rightancestorPos, ancestorRound, out var rightstartFighters))
+                {
+                    startFighters.AddRange(rightstartFighters);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    private static List<HashSet<Fighter>> GetVariations(HashSet<Fighter> winners)
+    {
+        var winnerList = winners.ToList();
+        var variations = new List<HashSet<Fighter>>();
+
+        // 1 selected. add the fighters themselves
+        foreach (var fighter in winners)
+        {
+            variations.Add(new HashSet<Fighter>()
+                { fighter}
+            );
+        }
+
+        // pick a certain number of fighters out of the winners
+        for (int i = 2; i < winners.Count; i++)
+        {
+            var selectionNums = GetVariationNumbers(i, winners.Count);
+            foreach (var variation in selectionNums)
+            {
+                var set = new HashSet<Fighter>();
+                foreach (var num in variation)
+                {
+                    set.Add(winnerList[num]);
+                }
+                variations.Add(set);
+            }
+        }
+
+        // all winners
+        if (winners.Count > 1)
+        {
+            variations.Add(winners);
+        }
+
+        return variations;
+    }
+
+    private static List<List<int>> GetVariationNumbers(int selected, int total)
+    {
+        var variationNumbers = new List<List<int>>();
+
+        GetVariations(total, selected, new List<int>(), variationNumbers);
+
+        return variationNumbers;
+    }
+
+
+
+    private static void GetVariations(int positions, int remainingelements, List<int> previousplacements, List<List<int>> allVariations)
+    {
+        if (remainingelements == 0)
+        {
+            allVariations.Add(previousplacements);
+            return;
+        }
+        var start = 0;
+        if (previousplacements.Any())
+        {
+            start = previousplacements.Last() + 1;
+        }
+
+        var end = positions - remainingelements + 1;
+
+        for (int i = start; i < end; i++)
+        {
+            var newplacements = new List<int>(previousplacements);
+            newplacements.Add(i);
+            GetVariations(positions, remainingelements - 1, newplacements, allVariations);
+        }
+    }
+
+
+
+    private static HashSet<Fighter> GetPossibleOpponents(HashSet<Fighter> winners, IEnumerable<Fighter> otherSide)
+    {
+        var possibleOpponents = new HashSet<Fighter>();
+
+        foreach (var opponent in AvailableFighters)
+        {
+            var canUse = true;
+            foreach (var fighter in otherSide)
+            {
+                var result = GetFighter(Extensions.GetOutcome(Extensions.ToChar(opponent), Extensions.ToChar(fighter)).ToString());
+                if (!winners.Contains(result))
+                {
+                    canUse = false;
+                    break;
+                }
+            }
+            if (canUse)
+            {
+                possibleOpponents.Add(opponent);
+            }
+        }
+
+        return possibleOpponents;
+    }
+
+    public static HashSet<Fighter> AvailableFighters =>
+        new HashSet<Fighter>
+        {
+            Fighter.Scissors,
+            Fighter.Paper,
+            Fighter.Lizard,
+            Fighter.Spock,
+            Fighter.Rock
+        };
+
+
+    public static List<List<HashSet<char>>> CreatePossibleRounds(string lineup)
     {
         var possibleFighters = new List<HashSet<char>>();
 
@@ -690,13 +917,11 @@ public static class TournamentHandler
 
         while (lineup.Count() > 1)
         {
-
             lineup = RunTournamentForRounds(lineup, 1);
             rounds.Add(lineup);
         }
 
         return rounds;
-
     }
 
 

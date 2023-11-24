@@ -96,6 +96,12 @@ public class Program
             var tournamentResult = TournamentHandler.RunTournamentForRounds(lineupString, (int)Math.Log2(tournament.FigherCount));
             if (!tournamentResult.Contains('S')) throw new InvalidOperationException("No scissors left");
         }
+        else if (tournament.Level == 7)
+        {
+            var rounds = TournamentHandler.CreatePossibleRounds(lineupString);
+            if (rounds.Last().Count() != 1) throw new InvalidOperationException("More than 1 possible winner");
+            if (!rounds.Last().First().Contains('S')) throw new InvalidOperationException("No scissors left");
+        }
     }
 
 

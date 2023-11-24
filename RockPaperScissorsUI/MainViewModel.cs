@@ -115,7 +115,21 @@ class MainViewModel : ViewModelBase
     {
         _tournamentRounds.Clear();
         var solution = TournamentHandler.Solve(CurrentVisualTournament.CurrentTournament);
+
+        if (CurrentVisualTournament.CurrentTournament.Level  == 7)
+        {
+            var rounds = TournamentHandler.CreatePossibleRounds(solution);
+
+            foreach (var round in rounds)
+            {
+                _tournamentRounds.Add(round.Select(f => string.Join("", f)).ToList());
+            }
+        }
+
+        else
+        { 
         _tournamentRounds = TournamentHandler.CreateRounds(solution);
+        }
         Winner = _tournamentRounds.Last().First().ToString();
 
         CreateVisuals(_tournamentRounds);
