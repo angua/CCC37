@@ -1,10 +1,12 @@
-﻿namespace Contest;
+﻿namespace RockPaperScissors;
 
 public enum Fighter
 {
-    Rock = 0,
-    Paper = 1,
-    Scissors = 2,
-    Lizard = 3,
-    Spock = 4,
+    Available = 0,
+    Rock = 1,
+    Paper = 2,
+    Scissors = 3,
+    Lizard = 4,
+    Spock = 5,
+    Unknown = 6
 }
